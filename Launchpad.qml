@@ -89,6 +89,20 @@ Item {
     else open("{}")
   }
 
+  // Changes settings from outside, e.g.
+  //   omarchy-shell shell call launchpad configure '{"columns": 8}'
+  function configure(payloadJson) {
+    var changes = {}
+    try {
+      changes = JSON.parse(String(payloadJson || "{}")) || {}
+    } catch (e) {
+      return
+    }
+    for (var key in changes)
+      if (key in settings.spec) settings.preview(key, changes[key])
+    settings.save()
+  }
+
   // ---- Apps ----------------------------------------------------------------
 
   // The shell's own app list: the same apps, search and hidden entries as the
