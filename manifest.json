@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "launchpad",
+  "name": "Launchpad",
+  "version": "1.0.0",
+  "description": "Fullscreen paged grid of every installed app, six columns by four rows",
+  "kinds": [
+    "overlay",
+    "menu"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "overlay": "Launchpad.qml",
+    "menu": "Launchpad.qml"
+  }
+}
