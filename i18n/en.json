@@ -1,4 +1,18 @@
 {
   "search.placeholder": "Search",
-  "search.empty": "No matching applications found"
+  "search.empty": "No matching applications found",
+  "dock.launchpadSettings": "Launchpad settings",
+  "settings.title": "Launchpad settings",
+  "settings.layout": "Layout",
+  "settings.columns": "Columns",
+  "settings.rows": "Rows",
+  "settings.iconSize": "Icon size",
+  "settings.showNames": "Show app names",
+  "settings.appearance": "Appearance",
+  "settings.backdrop": "Backdrop darkness",
+  "settings.percent": "%1%",
+  "settings.followTheme": "Use theme colors",
+  "settings.behaviour": "Behavior",
+  "settings.rememberPage": "Reopen on the last page",
+  "settings.reset": "Reset to defaults"
 }

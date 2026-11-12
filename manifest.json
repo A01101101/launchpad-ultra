@@ -2,15 +2,21 @@
   "schemaVersion": 1,
   "id": "launchpad",
   "name": "Launchpad",
-  "version": "1.0.0",
-  "description": "Fullscreen paged grid of every installed app, six columns by four rows",
+  "version": "1.1.0",
+  "author": "a01101101",
+  "description": "Fullscreen paged grid of every installed app, with a dock whose apps button opens it",
   "kinds": [
     "overlay",
-    "menu"
+    "menu",
+    "service"
   ],
   "keepLoaded": true,
   "entryPoints": {
     "overlay": "Launchpad.qml",
-    "menu": "Launchpad.qml"
+    "menu": "Launchpad.qml",
+    "service": "dock/Dock.qml"
+  },
+  "omarchy": {
+    "clonedFrom": "omarchy.dock"
   }
 }
