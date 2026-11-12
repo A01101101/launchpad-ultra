@@ -76,9 +76,19 @@ hl.layer_rule({ match = { namespace = "^launchpad$" }, blur = true, ignore_alpha
 | Type | Search by name, description or keyword |
 | Enter | Open the first match |
 | Left / Right, Page Up / Page Down, scroll | Turn the page |
+| Up / Down | Put the keyboard on an app; the arrows then move between apps |
+| Enter (with an app selected) | Open it |
+| Delete (with an app selected) | Uninstall it, after asking |
 | Escape | Clear the search, then close settings, then close |
 
 Clicking empty space also closes it.
+
+## With the mouse
+
+- Click an app to open it.
+- Right-click an app to open it, keep it in the dock or take it out, or
+  uninstall it.
+- Drag an app onto the dock to keep it there.
 
 ## Translating
 
@@ -91,8 +101,10 @@ English.
 - The manifest lists the `menu` kind next to `overlay` because the shell only
   hands its app list to plugins of that kind.
 - The dock in `dock/` is copied from Omarchy (MIT, see `dock/LICENSE`). It will
-  not pick up later changes to Omarchy's dock by itself. Dragging an app out of
-  Omarchy's own app grid onto the dock is gone along with that grid.
+  not pick up later changes to Omarchy's dock by itself. Its strings, in every
+  language Omarchy ships, are copied into `i18n/`.
+- `tests/check.py` checks the plugin against Omarchy's plugin guidelines: plain
+  text everywhere, own string catalogs, animation lengths and easing.
 - If you already run your own clone of the dock, disable it first; two docks
   would both show.
 - While developing: the shell keeps this plugin loaded between opens, so after
