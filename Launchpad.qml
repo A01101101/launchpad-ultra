@@ -599,12 +599,18 @@ Item {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        onContainsMouseChanged: if (containsMouse && !root.dragging) root.selectedIndex = cell.appIndex
+                        // Only the page in view takes the pointer. Its neighbours are
+                        // built but lie outside the viewport, where a click would
+                        // otherwise open an app nobody can see.
+                        enabled: pageSlide.index === root.page
                         onPressed: function(event) {
                           cell.moved = false
                           cell.pressPoint = Qt.point(event.x, event.y)
                         }
+                        // The keyboard's app follows the pointer when the pointer
+                        // moves, not when a page slides under it.
                         onPositionChanged: function(event) {
+                          if (!pressedButtons && !root.dragging) root.selectedIndex = cell.appIndex
                           if (!(pressedButtons & Qt.LeftButton)) return
                           if (!cell.moved && Math.hypot(event.x - cell.pressPoint.x, event.y - cell.pressPoint.y) > Style.space(4)) cell.moved = true
                           if (cell.moved) root.dragTo(cell.modelData, hit.mapToItem(panel.contentItem, event.x, event.y))
