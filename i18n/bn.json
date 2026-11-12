@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "স্বয়ংক্রিয় লুকান",
+  "dock.keepInDock": "Dock-এ রাখুন",
+  "dock.newWindow": "নতুন উইন্ডো",
+  "dock.open": "খুলুন",
+  "dock.positionBottom": "নিচে",
+  "dock.positionLeft": "বামে",
+  "dock.positionRight": "ডানে",
+  "dock.positionTop": "উপরে",
+  "dock.quit": "বন্ধ করুন",
+  "dock.removeFromDock": "Dock থেকে সরান",
+  "dock.uninstall": "আনইনস্টল",
+  "common.uninstall": "আনইনস্টল",
+  "common.uninstallConfirm": "আপনি কি %1 আনইনস্টল করতে চান?"
+}

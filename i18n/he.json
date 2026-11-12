@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "הסתרה אוטומטית",
+  "dock.keepInDock": "שמירה ב-Dock",
+  "dock.newWindow": "חלון חדש",
+  "dock.open": "פתיחה",
+  "dock.positionBottom": "תחתון",
+  "dock.positionLeft": "שמאל",
+  "dock.positionRight": "ימין",
+  "dock.positionTop": "עליון",
+  "dock.quit": "יציאה",
+  "dock.removeFromDock": "הסרה מה-Dock",
+  "dock.uninstall": "הסרה",
+  "common.uninstall": "הסרה",
+  "common.uninstallConfirm": "להסיר את %1?"
+}

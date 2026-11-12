@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Skjul automatisk",
+  "dock.keepInDock": "Behold i Dock",
+  "dock.newWindow": "Nytt vindu",
+  "dock.open": "Åpne",
+  "dock.positionBottom": "Nederst",
+  "dock.positionLeft": "Venstre",
+  "dock.positionRight": "Høyre",
+  "dock.positionTop": "Øverst",
+  "dock.quit": "Avslutt",
+  "dock.removeFromDock": "Fjern fra Dock",
+  "dock.uninstall": "Avinstaller",
+  "common.uninstall": "Avinstaller",
+  "common.uninstallConfirm": "Vil du avinstallere %1?"
+}

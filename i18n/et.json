@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Autopeitmine",
+  "dock.keepInDock": "Hoia dokis",
+  "dock.newWindow": "Uus aken",
+  "dock.open": "Ava",
+  "dock.positionBottom": "All",
+  "dock.positionLeft": "Vasakul",
+  "dock.positionRight": "Paremal",
+  "dock.positionTop": "Üleval",
+  "dock.quit": "Sulge",
+  "dock.removeFromDock": "Eemalda dokist",
+  "dock.uninstall": "Desinstalli",
+  "common.uninstall": "Desinstalli",
+  "common.uninstallConfirm": "Kas soovid eemaldada %1?"
+}

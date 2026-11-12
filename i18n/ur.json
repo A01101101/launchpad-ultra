@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "خودکار چھپائیں",
+  "dock.keepInDock": "Dock میں رکھیں",
+  "dock.newWindow": "نئی ونڈو",
+  "dock.open": "کھولیں",
+  "dock.positionBottom": "نیچے",
+  "dock.positionLeft": "بائیں",
+  "dock.positionRight": "دائیں",
+  "dock.positionTop": "اوپر",
+  "dock.quit": "بند کریں",
+  "dock.removeFromDock": "ڈاک سے ہٹائیں",
+  "dock.uninstall": "ان انسٹال کریں",
+  "common.uninstall": "ان انسٹال کریں",
+  "common.uninstallConfirm": "کیا آپ %1 ان انسٹال کرنا چاہتے ہیں؟"
+}

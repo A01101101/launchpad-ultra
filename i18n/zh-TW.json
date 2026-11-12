@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "自動隱藏",
+  "dock.keepInDock": "保留在 Dock",
+  "dock.newWindow": "新視窗",
+  "dock.open": "開啟",
+  "dock.positionBottom": "底部",
+  "dock.positionLeft": "左側",
+  "dock.positionRight": "右側",
+  "dock.positionTop": "頂部",
+  "dock.quit": "結束",
+  "dock.removeFromDock": "從 Dock 移除",
+  "dock.uninstall": "解除安裝",
+  "common.uninstall": "解除安裝",
+  "common.uninstallConfirm": "要解除安裝 %1 嗎？"
+}

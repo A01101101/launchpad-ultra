@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "پنهان‌شدن خودکار",
+  "dock.keepInDock": "نگه‌داشتن در Dock",
+  "dock.newWindow": "پنجرهٔ جدید",
+  "dock.open": "باز کردن",
+  "dock.positionBottom": "پایین",
+  "dock.positionLeft": "چپ",
+  "dock.positionRight": "راست",
+  "dock.positionTop": "بالا",
+  "dock.quit": "خروج",
+  "dock.removeFromDock": "حذف از Dock",
+  "dock.uninstall": "حذف نصب",
+  "common.uninstall": "حذف نصب",
+  "common.uninstallConfirm": "%1 حذف نصب شود؟"
+}

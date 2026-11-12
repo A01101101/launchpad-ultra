@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Fela sjálfkrafa",
+  "dock.keepInDock": "Halda í Dock",
+  "dock.newWindow": "Nýr gluggi",
+  "dock.open": "Opna",
+  "dock.positionBottom": "Neðst",
+  "dock.positionLeft": "Vinstri",
+  "dock.positionRight": "Hægri",
+  "dock.positionTop": "Efst",
+  "dock.quit": "Loka",
+  "dock.removeFromDock": "Fjarlægja úr Dock",
+  "dock.uninstall": "Fjarlægja",
+  "common.uninstall": "Fjarlægja",
+  "common.uninstallConfirm": "Viltu fjarlægja %1?"
+}

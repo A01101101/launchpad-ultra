@@ -555,7 +555,7 @@ PanelWindow {
       width: menu.width - menu.contentLeftInset - menu.contentRightInset
 
       Repeater {
-        model: [["top", Commons.I18n.t("dock.positionTop")], ["bottom", Commons.I18n.t("dock.positionBottom")], ["left", Commons.I18n.t("dock.positionLeft")], ["right", Commons.I18n.t("dock.positionRight")]]
+        model: [["top", strings.t("dock.positionTop")], ["bottom", strings.t("dock.positionBottom")], ["left", strings.t("dock.positionLeft")], ["right", strings.t("dock.positionRight")]]
 
         delegate: MenuRow {
           required property var modelData
@@ -569,7 +569,7 @@ PanelWindow {
 
       MenuRow {
         visible: window.settingsMenu
-        text: Commons.I18n.t("dock.autoHide")
+        text: strings.t("dock.autoHide")
         checked: window.autohide
         onTriggered: Util.execDetached("omarchy-dock autohide " + (window.autohide ? "off" : "on"))
       }
@@ -582,19 +582,19 @@ PanelWindow {
 
       MenuRow {
         visible: menu.hasEntry && menu.running
-        text: Commons.I18n.t("dock.newWindow")
+        text: strings.t("dock.newWindow")
         onTriggered: window.dock.launch(menu.item)
       }
 
       MenuRow {
         visible: menu.hasEntry
-        text: menu.item && menu.item.pinned ? Commons.I18n.t("dock.removeFromDock") : Commons.I18n.t("dock.keepInDock")
+        text: menu.item && menu.item.pinned ? strings.t("dock.removeFromDock") : strings.t("dock.keepInDock")
         onTriggered: window.dock.setPinned(menu.item.key, !menu.item.pinned)
       }
 
       MenuRow {
         visible: menu.running
-        text: Commons.I18n.t("dock.quit")
+        text: strings.t("dock.quit")
         onTriggered: window.dock.quit(menu.item)
       }
     }

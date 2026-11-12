@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Авт. скриване",
+  "dock.keepInDock": "Запази в дока",
+  "dock.newWindow": "Нов прозорец",
+  "dock.open": "Отвори",
+  "dock.positionBottom": "Отдолу",
+  "dock.positionLeft": "Отляво",
+  "dock.positionRight": "Отдясно",
+  "dock.positionTop": "Отгоре",
+  "dock.quit": "Затвори",
+  "dock.removeFromDock": "Премахни от дока",
+  "dock.uninstall": "Деинсталирай",
+  "common.uninstall": "Деинсталирай",
+  "common.uninstallConfirm": "Деинсталирай %1?"
+}

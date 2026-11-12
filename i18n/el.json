@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Αυτόματη απόκρυψη",
+  "dock.keepInDock": "Διατήρηση στο Dock",
+  "dock.newWindow": "Νέο παράθυρο",
+  "dock.open": "Άνοιγμα",
+  "dock.positionBottom": "Κάτω",
+  "dock.positionLeft": "Αριστερά",
+  "dock.positionRight": "Δεξιά",
+  "dock.positionTop": "Πάνω",
+  "dock.quit": "Έξοδος",
+  "dock.removeFromDock": "Αφαίρεση από το Dock",
+  "dock.uninstall": "Απεγκατάσταση",
+  "common.uninstall": "Απεγκατάσταση",
+  "common.uninstallConfirm": "Θέλεις απεγκατάσταση του %1;"
+}

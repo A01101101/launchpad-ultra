@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Auto-skrivanje",
+  "dock.keepInDock": "Zadrži u Docku",
+  "dock.newWindow": "Novi prozor",
+  "dock.open": "Otvori",
+  "dock.positionBottom": "Dolje",
+  "dock.positionLeft": "Lijevo",
+  "dock.positionRight": "Desno",
+  "dock.positionTop": "Gore",
+  "dock.quit": "Zatvori",
+  "dock.removeFromDock": "Ukloni iz Docka",
+  "dock.uninstall": "Deinstaliraj",
+  "common.uninstall": "Deinstaliraj",
+  "common.uninstallConfirm": "Želite li deinstalirati %1?"
+}

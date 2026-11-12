@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Tự ẩn",
+  "dock.keepInDock": "Giữ trong Dock",
+  "dock.newWindow": "Cửa sổ mới",
+  "dock.open": "Mở",
+  "dock.positionBottom": "Dưới",
+  "dock.positionLeft": "Trái",
+  "dock.positionRight": "Phải",
+  "dock.positionTop": "Trên",
+  "dock.quit": "Thoát",
+  "dock.removeFromDock": "Xóa khỏi Dock",
+  "dock.uninstall": "Gỡ cài đặt",
+  "common.uninstall": "Gỡ cài đặt",
+  "common.uninstallConfirm": "Bạn muốn gỡ cài đặt %1?"
+}

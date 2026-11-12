@@ -14,5 +14,18 @@
   "settings.followTheme": "Use theme colors",
   "settings.behaviour": "Behavior",
   "settings.rememberPage": "Reopen on the last page",
-  "settings.reset": "Reset to defaults"
+  "settings.reset": "Reset to defaults",
+  "dock.autoHide": "Auto-hide",
+  "dock.keepInDock": "Keep in Dock",
+  "dock.newWindow": "New Window",
+  "dock.open": "Open",
+  "dock.positionBottom": "Bottom",
+  "dock.positionLeft": "Left",
+  "dock.positionRight": "Right",
+  "dock.positionTop": "Top",
+  "dock.quit": "Quit",
+  "dock.removeFromDock": "Remove from Dock",
+  "dock.uninstall": "Uninstall",
+  "common.uninstall": "Uninstall",
+  "common.uninstallConfirm": "Do you want to uninstall %1?"
 }

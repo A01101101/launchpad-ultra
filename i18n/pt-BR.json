@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Ocultar automaticamente",
+  "dock.keepInDock": "Manter no Dock",
+  "dock.newWindow": "Nova janela",
+  "dock.open": "Abrir",
+  "dock.positionBottom": "Inferior",
+  "dock.positionLeft": "Esquerda",
+  "dock.positionRight": "Direita",
+  "dock.positionTop": "Superior",
+  "dock.quit": "Encerrar",
+  "dock.removeFromDock": "Remover do Dock",
+  "dock.uninstall": "Desinstalar",
+  "common.uninstall": "Desinstalar",
+  "common.uninstallConfirm": "Desinstalar %1?"
+}

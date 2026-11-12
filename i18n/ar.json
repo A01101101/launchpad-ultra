@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "إخفاء تلقائي",
+  "dock.keepInDock": "الاحتفاظ في Dock",
+  "dock.newWindow": "نافذة جديدة",
+  "dock.open": "فتح",
+  "dock.positionBottom": "الأسفل",
+  "dock.positionLeft": "اليسار",
+  "dock.positionRight": "اليمين",
+  "dock.positionTop": "الأعلى",
+  "dock.quit": "إنهاء",
+  "dock.removeFromDock": "إزالة من Dock",
+  "dock.uninstall": "إلغاء التثبيت",
+  "common.uninstall": "إلغاء التثبيت",
+  "common.uninstallConfirm": "هل تريد إلغاء تثبيت %1؟"
+}

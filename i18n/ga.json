@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Uathfholaigh",
+  "dock.keepInDock": "Coinnigh sa Duga",
+  "dock.newWindow": "Fuinneog nua",
+  "dock.open": "Oscail",
+  "dock.positionBottom": "Bun",
+  "dock.positionLeft": "Clé",
+  "dock.positionRight": "Deas",
+  "dock.positionTop": "Barr",
+  "dock.quit": "Scoir",
+  "dock.removeFromDock": "Bain den Duga",
+  "dock.uninstall": "Díshuiteáil",
+  "common.uninstall": "Díshuiteáil",
+  "common.uninstallConfirm": "Díshuiteáil %1?"
+}

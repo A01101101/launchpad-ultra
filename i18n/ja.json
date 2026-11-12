@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "自動で隠す",
+  "dock.keepInDock": "Dock に残す",
+  "dock.newWindow": "新しいウィンドウ",
+  "dock.open": "開く",
+  "dock.positionBottom": "下",
+  "dock.positionLeft": "左",
+  "dock.positionRight": "右",
+  "dock.positionTop": "上",
+  "dock.quit": "終了",
+  "dock.removeFromDock": "Dock から削除",
+  "dock.uninstall": "アンインストール",
+  "common.uninstall": "アンインストール",
+  "common.uninstallConfirm": "%1 をアンインストールしますか？"
+}

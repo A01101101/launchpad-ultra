@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Аутоматски сакриј",
+  "dock.keepInDock": "Задржи у доку",
+  "dock.newWindow": "Нови прозор",
+  "dock.open": "Отвори",
+  "dock.positionBottom": "Доле",
+  "dock.positionLeft": "Лево",
+  "dock.positionRight": "Десно",
+  "dock.positionTop": "Горе",
+  "dock.quit": "Изађи",
+  "dock.removeFromDock": "Уклони из дока",
+  "dock.uninstall": "Деинсталирај",
+  "common.uninstall": "Деинсталирај",
+  "common.uninstallConfirm": "Да ли желите да деинсталирате %1?"
+}

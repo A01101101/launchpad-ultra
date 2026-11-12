@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "ස්වයං-සඟවන්න",
+  "dock.keepInDock": "Dock හි තබන්න",
+  "dock.newWindow": "අලුත් කවුළුව",
+  "dock.open": "විවෘත කරන්න",
+  "dock.positionBottom": "පහළ",
+  "dock.positionLeft": "වම",
+  "dock.positionRight": "දකුණ",
+  "dock.positionTop": "ඉහළ",
+  "dock.quit": "ඉවත් වන්න",
+  "dock.removeFromDock": "Dock වෙතින් ඉවත් කරන්න",
+  "dock.uninstall": "අස්ථාපනය",
+  "common.uninstall": "අස්ථාපනය",
+  "common.uninstallConfirm": "%1 අස්ථාපනය කරන්නද?"
+}

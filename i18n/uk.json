@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Автоприховування",
+  "dock.keepInDock": "Залишити в Dock",
+  "dock.newWindow": "Нове вікно",
+  "dock.open": "Відкрити",
+  "dock.positionBottom": "Внизу",
+  "dock.positionLeft": "Ліворуч",
+  "dock.positionRight": "Праворуч",
+  "dock.positionTop": "Зверху",
+  "dock.quit": "Вийти",
+  "dock.removeFromDock": "Прибрати з Dock",
+  "dock.uninstall": "Видалити",
+  "common.uninstall": "Видалити",
+  "common.uninstallConfirm": "Видалити %1?"
+}

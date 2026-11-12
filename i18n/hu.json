@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Automatikus elrejtés",
+  "dock.keepInDock": "Megtartás a Dockban",
+  "dock.newWindow": "Új ablak",
+  "dock.open": "Megnyitás",
+  "dock.positionBottom": "Alul",
+  "dock.positionLeft": "Balra",
+  "dock.positionRight": "Jobbra",
+  "dock.positionTop": "Felül",
+  "dock.quit": "Kilépés",
+  "dock.removeFromDock": "Eltávolítás a Dockból",
+  "dock.uninstall": "Eltávolítás",
+  "common.uninstall": "Eltávolítás",
+  "common.uninstallConfirm": "Eltávolítod: %1?"
+}

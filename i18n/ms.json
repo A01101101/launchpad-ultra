@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Sembunyi automatik",
+  "dock.keepInDock": "Kekalkan di Dock",
+  "dock.newWindow": "Tetingkap Baharu",
+  "dock.open": "Buka",
+  "dock.positionBottom": "Bawah",
+  "dock.positionLeft": "Kiri",
+  "dock.positionRight": "Kanan",
+  "dock.positionTop": "Atas",
+  "dock.quit": "Keluar",
+  "dock.removeFromDock": "Keluarkan dari Dock",
+  "dock.uninstall": "Nyahpasang",
+  "common.uninstall": "Nyahpasang",
+  "common.uninstallConfirm": "Adakah anda mahu menyahpasang %1?"
+}

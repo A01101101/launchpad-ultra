@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Automaticky skrývať",
+  "dock.keepInDock": "Ponechať v Docku",
+  "dock.newWindow": "Nové okno",
+  "dock.open": "Otvoriť",
+  "dock.positionBottom": "Dole",
+  "dock.positionLeft": "Vľavo",
+  "dock.positionRight": "Vpravo",
+  "dock.positionTop": "Hore",
+  "dock.quit": "Ukončiť",
+  "dock.removeFromDock": "Odstrániť z Docku",
+  "dock.uninstall": "Odinštalovať",
+  "common.uninstall": "Odinštalovať",
+  "common.uninstallConfirm": "Chcete odinštalovať %1?"
+}

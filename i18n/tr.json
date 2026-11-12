@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Otomatik gizle",
+  "dock.keepInDock": "Dock'ta Tut",
+  "dock.newWindow": "Yeni Pencere",
+  "dock.open": "Aç",
+  "dock.positionBottom": "Alt",
+  "dock.positionLeft": "Sol",
+  "dock.positionRight": "Sağ",
+  "dock.positionTop": "Üst",
+  "dock.quit": "Çık",
+  "dock.removeFromDock": "Dock'tan Kaldır",
+  "dock.uninstall": "Kaldır",
+  "common.uninstall": "Kaldır",
+  "common.uninstallConfirm": "%1 kaldırılsın mı?"
+}

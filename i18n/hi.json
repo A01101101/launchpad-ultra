@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "ऑटो-छिपाएं",
+  "dock.keepInDock": "Dock में रखें",
+  "dock.newWindow": "नई विंडो",
+  "dock.open": "खोलें",
+  "dock.positionBottom": "नीचे",
+  "dock.positionLeft": "बाएं",
+  "dock.positionRight": "दाएं",
+  "dock.positionTop": "ऊपर",
+  "dock.quit": "बाहर निकलें",
+  "dock.removeFromDock": "Dock से हटाएं",
+  "dock.uninstall": "अनइंस्टॉल करें",
+  "common.uninstall": "अनइंस्टॉल करें",
+  "common.uninstallConfirm": "क्या आप %1 अनइंस्टॉल करना चाहते हैं?"
+}

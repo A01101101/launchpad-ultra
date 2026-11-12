@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Ascundere automată",
+  "dock.keepInDock": "Păstrează în Dock",
+  "dock.newWindow": "Fereastră nouă",
+  "dock.open": "Deschide",
+  "dock.positionBottom": "Jos",
+  "dock.positionLeft": "Stânga",
+  "dock.positionRight": "Dreapta",
+  "dock.positionTop": "Sus",
+  "dock.quit": "Închide",
+  "dock.removeFromDock": "Elimină din Dock",
+  "dock.uninstall": "Dezinstalează",
+  "common.uninstall": "Dezinstalează",
+  "common.uninstallConfirm": "Vrei să dezinstalezi %1?"
+}

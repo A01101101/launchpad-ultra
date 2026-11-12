@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Piilota automaattisesti",
+  "dock.keepInDock": "Pidä Dockissa",
+  "dock.newWindow": "Uusi ikkuna",
+  "dock.open": "Avaa",
+  "dock.positionBottom": "Alhaalla",
+  "dock.positionLeft": "Vasemmalla",
+  "dock.positionRight": "Oikealla",
+  "dock.positionTop": "Ylhäällä",
+  "dock.quit": "Lopeta",
+  "dock.removeFromDock": "Poista Dockista",
+  "dock.uninstall": "Poista asennus",
+  "common.uninstall": "Poista asennus",
+  "common.uninstallConfirm": "Haluatko poistaa %1?"
+}

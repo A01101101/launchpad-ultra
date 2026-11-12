@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Paslēpt automātiski",
+  "dock.keepInDock": "Paturēt dokā",
+  "dock.newWindow": "Jauns logs",
+  "dock.open": "Atvērt",
+  "dock.positionBottom": "Apakšā",
+  "dock.positionLeft": "Pa kreisi",
+  "dock.positionRight": "Pa labi",
+  "dock.positionTop": "Augšā",
+  "dock.quit": "Iziet",
+  "dock.removeFromDock": "Noņemt no doka",
+  "dock.uninstall": "Atinstalēt",
+  "common.uninstall": "Atinstalēt",
+  "common.uninstallConfirm": "Vai atinstalēt %1?"
+}

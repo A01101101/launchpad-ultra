@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Sembunyi Otomatis",
+  "dock.keepInDock": "Simpan di Dock",
+  "dock.newWindow": "Jendela Baru",
+  "dock.open": "Buka",
+  "dock.positionBottom": "Bawah",
+  "dock.positionLeft": "Kiri",
+  "dock.positionRight": "Kanan",
+  "dock.positionTop": "Atas",
+  "dock.quit": "Keluar",
+  "dock.removeFromDock": "Hapus dari Dock",
+  "dock.uninstall": "Hapus Pemasangan",
+  "common.uninstall": "Hapus Pemasangan",
+  "common.uninstallConfirm": "Hapus pemasangan %1?"
+}

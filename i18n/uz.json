@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Avto-yashirish",
+  "dock.keepInDock": "Dockda qoldirish",
+  "dock.newWindow": "Yangi oyna",
+  "dock.open": "Ochish",
+  "dock.positionBottom": "Past",
+  "dock.positionLeft": "Chap",
+  "dock.positionRight": "Oʻng",
+  "dock.positionTop": "Yuqori",
+  "dock.quit": "Chiqish",
+  "dock.removeFromDock": "Dockdan olib tashlash",
+  "dock.uninstall": "Olib tashlash",
+  "common.uninstall": "Olib tashlash",
+  "common.uninstallConfirm": "%1 ni olib tashlamoqchimisiz?"
+}

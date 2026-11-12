@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Ficha kiotomatiki",
+  "dock.keepInDock": "Weka kwenye Dock",
+  "dock.newWindow": "Dirisha jipya",
+  "dock.open": "Fungua",
+  "dock.positionBottom": "Chini",
+  "dock.positionLeft": "Kushoto",
+  "dock.positionRight": "Kulia",
+  "dock.positionTop": "Juu",
+  "dock.quit": "Toka",
+  "dock.removeFromDock": "Ondoa kwenye Dock",
+  "dock.uninstall": "Ondoa",
+  "common.uninstall": "Ondoa",
+  "common.uninstallConfirm": "Je, unataka kuondoa %1?"
+}

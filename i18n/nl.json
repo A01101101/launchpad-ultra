@@ -1,0 +1,15 @@
+{
+  "dock.autoHide": "Auto-verbergen",
+  "dock.keepInDock": "In Dock houden",
+  "dock.newWindow": "Nieuw venster",
+  "dock.open": "Openen",
+  "dock.positionBottom": "Onder",
+  "dock.positionLeft": "Links",
+  "dock.positionRight": "Rechts",
+  "dock.positionTop": "Boven",
+  "dock.quit": "Afsluiten",
+  "dock.removeFromDock": "Uit Dock verwijderen",
+  "dock.uninstall": "Verwijderen",
+  "common.uninstall": "Verwijderen",
+  "common.uninstallConfirm": "Wil je %1 verwijderen?"
+}
