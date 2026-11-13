@@ -56,6 +56,23 @@ Item {
   readonly property int labelGap: Style.space(8)
   readonly property int labelRoom: settings.showNames ? labelSize * 1.5 + labelGap : 0
 
+  // How pages turn. `hSign` and `vSign` are +1 when the next page lies to
+  // the right or below, -1 when it lies to the left or above; a right-to-left
+  // layout flips the horizontal one.
+  readonly property bool paged: settings.scrollStyle === "pages"
+  readonly property bool horizontal: settings.slideFrom === "right" || settings.slideFrom === "left"
+  readonly property int hSign: (settings.slideFrom === "left" ? -1 : 1) * (Commons.I18n.rightToLeft ? -1 : 1)
+  readonly property int vSign: settings.slideFrom === "top" ? -1 : 1
+
+  // Scroll sensitivity, 1 to 5: how far the wheel must turn for a page, and
+  // how far a notch or a touchpad pixel scrolls the smooth grid.
+  readonly property int wheelThreshold: [80, 50, 25, 12, 5][settings.scrollSensitivity - 1]
+  readonly property int wheelNotch: [40, 70, 110, 160, 220][settings.scrollSensitivity - 1]
+  readonly property real wheelGain: [0.4, 0.7, 1, 1.5, 2.2][settings.scrollSensitivity - 1]
+  // Where the smooth grid is scrolling to.
+  property real smoothTarget: 0
+  onPagedChanged: scrollTo(0)
+
   // Colors: a dark glass with white ink by default, or the theme's own
   // background and text when "follow theme" is on.
   readonly property color ink: settings.followTheme ? Commons.Color.foreground : "white"
@@ -68,6 +85,7 @@ Item {
     cursorActive = false
     menuEntry = null
     rebuild()
+    scrollTo(0)
   }
   onPageChanged: if (query === "") browsedPage = page
   onPageSizeChanged: goToPage(page)
@@ -92,6 +110,7 @@ Item {
     if (appLibrary) appLibrary.refreshIcons()
     rebuild()
     goToPage(startPage)
+    scrollTo(0)
     opened = true
     Qt.callLater(function() { searchInput.forceActiveFocus() })
   }
@@ -143,13 +162,31 @@ Item {
     goToPage(page)
   }
 
-  // Moves the keyboard's app, turning the page to keep it in view.
+  function scrollTo(y) {
+    var most = Math.max(0, smoothGrid.contentHeight - smoothGrid.height)
+    smoothTarget = Math.max(0, Math.min(most, y))
+    smoothGrid.contentY = smoothTarget
+  }
+
+  function scrollBy(pixels) {
+    scrollTo(smoothTarget + pixels)
+  }
+
+  // Moves the keyboard's app, turning the page or scrolling to keep it in
+  // view. It starts from the first app showing.
   function select(delta) {
     if (apps.length === 0) return
+    var first = paged ? page * pageSize : Math.floor(smoothTarget / smoothGrid.cellHeight) * cols
     selectedIndex = cursorActive ? Math.max(0, Math.min(apps.length - 1, selectedIndex + delta))
-                                 : page * pageSize
+                                 : Math.min(apps.length - 1, first)
     cursorActive = true
-    goToPage(Math.floor(selectedIndex / pageSize))
+    if (paged) {
+      goToPage(Math.floor(selectedIndex / pageSize))
+      return
+    }
+    var top = Math.floor(selectedIndex / cols) * smoothGrid.cellHeight
+    if (top < smoothTarget) scrollTo(top)
+    else if (top + smoothGrid.cellHeight > smoothTarget + smoothGrid.height) scrollTo(top + smoothGrid.cellHeight - smoothGrid.height)
   }
 
   // ---- Dragging an app onto the dock ---------------------------------------
@@ -240,24 +277,42 @@ Item {
         color: Util.alpha(root.shade, settings.backdrop)
       }
 
-      // Clicking empty space dismisses the launcher.
+      // A click on empty space closes the launcher, or turns the page toward
+      // the side clicked when the settings say so. A right-click always closes.
       MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onClicked: {
-          if (root.menuEntry) root.menuEntry = null
-          else root.dismiss()
+        onClicked: function(event) {
+          if (root.menuEntry) {
+            root.menuEntry = null
+          } else if (root.paged && settings.emptyClick === "page" && event.button === Qt.LeftButton) {
+            var forward = root.horizontal ? event.x >= viewport.x + viewport.width / 2
+                                          : event.y >= viewport.y + viewport.height / 2
+            root.goToPage(root.page + (forward ? 1 : -1) * (root.horizontal ? root.hSign : root.vSign))
+          } else {
+            root.dismiss()
+          }
         }
       }
 
-      // Mouse wheel and touchpad swipes turn one page per gesture.
+      // Mouse wheel and touchpad swipes turn one page per gesture, or scroll
+      // the smooth grid. Over the settings card they scroll the card instead.
       WheelHandler {
+        id: wheel
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
         onWheel: function(event) {
-          if (wheelPause.running) return
+          var at = wheel.point.position
+          if (root.settingsOpen && at.x >= settingsCard.x && at.x <= settingsCard.x + settingsCard.width
+              && at.y >= settingsCard.y && at.y <= settingsCard.y + settingsCard.height) return
           var dx = event.angleDelta.x, dy = event.angleDelta.y
           var d = Math.abs(dx) > Math.abs(dy) ? dx : dy
-          if (Math.abs(d) < 25) return
+          if (!root.paged) {
+            var pixels = event.pixelDelta.y !== 0 ? event.pixelDelta.y * root.wheelGain : d / 120 * root.wheelNotch
+            root.scrollBy(-pixels)
+            return
+          }
+          if (wheelPause.running) return
+          if (Math.abs(d) < root.wheelThreshold) return
           root.goToPage(root.page + (d < 0 ? 1 : -1))
           wheelPause.start()
         }
@@ -347,18 +402,18 @@ Item {
               return
             }
             var key = Util.readingKey(event)
-            if (key === Qt.Key_PageDown) {
+            if (key === Qt.Key_PageDown || key === Qt.Key_PageUp) {
+              var ahead = key === Qt.Key_PageDown ? 1 : -1
               root.cursorActive = false
-              root.goToPage(root.page + 1)
-            } else if (key === Qt.Key_PageUp) {
-              root.cursorActive = false
-              root.goToPage(root.page - 1)
-            } else if (key === Qt.Key_Right) {
-              if (root.cursorActive) root.select(1)
-              else root.goToPage(root.page + 1)
-            } else if (key === Qt.Key_Left) {
-              if (root.cursorActive) root.select(-1)
-              else root.goToPage(root.page - 1)
+              if (root.paged) root.goToPage(root.page + ahead)
+              else root.scrollBy(ahead * smoothGrid.height * 0.9)
+            } else if (key === Qt.Key_Right || key === Qt.Key_Left) {
+              var onward = key === Qt.Key_Right ? 1 : -1
+              // With no app selected, the arrows turn toward the page on that
+              // side when pages run left and right, and otherwise step through.
+              if (root.cursorActive || !root.paged) root.select(onward)
+              else if (root.horizontal) root.goToPage(root.page + (event.key === Qt.Key_Right ? 1 : -1) * root.hSign)
+              else root.goToPage(root.page + onward)
             } else if (key === Qt.Key_Down) {
               root.select(root.cols)
             } else if (key === Qt.Key_Up) {
@@ -437,13 +492,13 @@ Item {
         }
       }
 
-      // ---- Pages -------------------------------------------------------------
+      // ---- The grid -----------------------------------------------------------
       Item {
         id: viewport
         anchors.top: searchPill.bottom
-        anchors.bottom: dots.top
+        anchors.bottom: parent.bottom
         anchors.topMargin: Style.space(16)
-        anchors.bottomMargin: Style.space(22)
+        anchors.bottomMargin: Style.space(78)
         // Centered in what the settings card leaves free. Placed by x so it
         // stays clear of the card in a right-to-left layout too.
         x: Math.round((parent.width - panel.reserve - width) / 2)
@@ -462,25 +517,35 @@ Item {
         readonly property real iconDraw: Math.max(Style.space(24),
           Math.min(root.iconSize, cellWidth - Style.space(8), cellHeight - root.labelRoom - Style.space(8)))
 
-        Row {
+        // Paged: one slide per page, laid out along the axis the pages turn on,
+        // so the next page comes in from the side the settings name.
+        Item {
           id: slider
+          visible: root.paged
+          width: parent.width
           height: parent.height
-          // Pages run the other way in a right-to-left layout.
-          x: (Commons.I18n.rightToLeft ? root.page - (root.pageCount - 1) : -root.page) * viewport.width
+          x: root.horizontal ? -root.hSign * root.page * viewport.width : 0
+          y: root.horizontal ? 0 : -root.vSign * root.page * viewport.height
           // No animation while hidden, so it reopens already on its page.
           Behavior on x {
             enabled: root.opened
             NumberAnimation { duration: Style.duration(280); easing.type: Easing.Bezier; easing.bezierCurve: Style.easeOut }
           }
+          Behavior on y {
+            enabled: root.opened
+            NumberAnimation { duration: Style.duration(280); easing.type: Easing.Bezier; easing.bezierCurve: Style.easeOut }
+          }
 
           Repeater {
-            model: root.pageCount
+            model: root.paged ? root.pageCount : 0
 
             // One page of the grid. Only the current page and its neighbours
             // are built, so a long app list costs no more than a short one.
             delegate: Item {
               id: pageSlide
               required property int index
+              x: root.horizontal ? root.hSign * index * viewport.width : 0
+              y: root.horizontal ? 0 : root.vSign * index * viewport.height
               width: viewport.width
               height: viewport.height
 
@@ -496,143 +561,52 @@ Item {
                     model: root.apps.slice(pageSlide.index * root.pageSize,
                                            (pageSlide.index + 1) * root.pageSize)
 
-                    delegate: Item {
-                      id: cell
+                    delegate: AppCell {
                       required property var modelData
                       required property int index
-                      readonly property int appIndex: pageSlide.index * root.pageSize + index
-                      readonly property bool launching: root.launchingId === modelData.id
-                      // A press that moves is a drag toward the dock, not a click.
-                      property bool moved: false
-                      property point pressPoint
-                      width: viewport.cellWidth
-                      height: viewport.cellHeight
-
-                      // Where the keyboard is.
-                      Rectangle {
-                        anchors.fill: appItem
-                        anchors.margins: -Style.space(8)
-                        radius: Style.cornerRadius
-                        visible: root.cursorActive && cell.appIndex === root.selectedIndex
-                        color: root.inkAlpha(0.14)
-                        border.width: 1
-                        border.color: root.inkAlpha(0.3)
-                      }
-
-                      Column {
-                        id: appItem
-                        anchors.centerIn: parent
-                        width: Math.max(viewport.iconDraw, cell.width - Style.space(8))
-                        spacing: root.labelGap
-
-                        // The icon zooms toward the viewer and fades as its app starts.
-                        scale: cell.launching ? 1.22 : 1
-                        opacity: cell.launching ? 0 : 1
-                        Behavior on scale {
-                          enabled: root.opened
-                          NumberAnimation { duration: Style.duration(180); easing.type: Easing.Bezier; easing.bezierCurve: Style.easeOut }
-                        }
-                        Behavior on opacity {
-                          enabled: root.opened
-                          NumberAnimation { duration: Style.duration(180); easing.type: Easing.OutCubic }
-                        }
-
-                        Item {
-                          id: iconBox
-                          anchors.horizontalCenter: parent.horizontalCenter
-                          width: viewport.iconDraw
-                          height: viewport.iconDraw
-                          scale: hit.pressed ? 0.96 : hit.containsMouse ? 1.1 : 1
-                          Behavior on scale {
-                            NumberAnimation {
-                              duration: Style.duration(hit.pressed ? 80 : 180)
-                              easing.type: Easing.Bezier
-                              easing.bezierCurve: Style.easeOut
-                            }
-                          }
-
-                          Image {
-                            id: icon
-                            anchors.fill: parent
-                            source: root.appLibrary ? root.appLibrary.iconSource(cell.modelData.icon) : ""
-                            sourceSize.width: 256
-                            sourceSize.height: 256
-                            fillMode: Image.PreserveAspectFit
-                            asynchronous: true
-                            smooth: true
-                            mipmap: true
-                            visible: false
-                            // An app whose own icon file is missing still gets a tile.
-                            onStatusChanged: if (status === Image.Error)
-                              source = Quickshell.iconPath("application-x-executable", true)
-                          }
-                          MultiEffect {
-                            anchors.fill: icon
-                            source: icon
-                            shadowEnabled: true
-                            shadowColor: "black"
-                            shadowOpacity: hit.containsMouse ? 0.55 : 0.45
-                            shadowBlur: hit.containsMouse ? 0.75 : 0.55
-                            shadowVerticalOffset: hit.containsMouse ? 14 : 8
-                          }
-                        }
-
-                        Text {
-                          textFormat: Text.PlainText
-                          visible: settings.showNames
-                          width: parent.width
-                          horizontalAlignment: Text.AlignHCenter
-                          elide: Text.ElideRight
-                          color: root.ink
-                          font.family: Style.font.family
-                          font.pixelSize: root.labelSize
-                          font.weight: Font.Medium
-                          style: Text.Raised
-                          styleColor: Util.alpha(root.shade, 0.8)
-                          text: root.appLibrary ? root.appLibrary.entryName(cell.modelData) : ""
-                        }
-                      }
-
-                      MouseArea {
-                        id: hit
-                        anchors.fill: appItem
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        // Only the page in view takes the pointer. Its neighbours are
-                        // built but lie outside the viewport, where a click would
-                        // otherwise open an app nobody can see.
-                        enabled: pageSlide.index === root.page
-                        onPressed: function(event) {
-                          cell.moved = false
-                          cell.pressPoint = Qt.point(event.x, event.y)
-                        }
-                        // The keyboard's app follows the pointer when the pointer
-                        // moves, not when a page slides under it.
-                        onPositionChanged: function(event) {
-                          if (!pressedButtons && !root.dragging) root.selectedIndex = cell.appIndex
-                          if (!(pressedButtons & Qt.LeftButton)) return
-                          if (!cell.moved && Math.hypot(event.x - cell.pressPoint.x, event.y - cell.pressPoint.y) > Style.space(4)) cell.moved = true
-                          if (cell.moved) root.dragTo(cell.modelData, hit.mapToItem(panel.contentItem, event.x, event.y))
-                        }
-                        onReleased: function(event) {
-                          if (root.dragging && event.button === Qt.LeftButton) root.dropDrag()
-                        }
-                        onCanceled: if (root.dragging) root.dismiss()
-                        onClicked: function(event) {
-                          if (cell.moved) return
-                          if (event.button === Qt.RightButton) {
-                            root.openMenu(cell.modelData, hit.mapToItem(panel.contentItem, event.x, event.y))
-                            return
-                          }
-                          root.menuEntry = null
-                          root.openApp(cell.modelData)
-                        }
-                      }
+                      entry: modelData
+                      appIndex: pageSlide.index * root.pageSize + index
+                      live: pageSlide.index === root.page
                     }
                   }
                 }
               }
+            }
+          }
+        }
+
+        // Smooth: every app on one grid that scrolls like a web page. The
+        // wheel drives it through root.scrollBy(), which the sensitivity
+        // setting scales.
+        GridView {
+          id: smoothGrid
+          visible: !root.paged
+          anchors.horizontalCenter: parent.horizontalCenter
+          width: root.cols * cellWidth
+          height: parent.height
+          cellWidth: viewport.cellWidth + viewport.columnGap
+          cellHeight: viewport.cellHeight + viewport.rowGap
+          model: root.paged ? [] : root.apps
+          interactive: false
+          boundsBehavior: Flickable.StopAtBounds
+          cacheBuffer: Math.max(0, height)
+
+          Behavior on contentY {
+            enabled: root.opened
+            NumberAnimation { duration: Style.duration(160); easing.type: Easing.OutCubic }
+          }
+
+          delegate: Item {
+            id: smoothCell
+            required property var modelData
+            required property int index
+            width: smoothGrid.cellWidth
+            height: smoothGrid.cellHeight
+
+            AppCell {
+              anchors.centerIn: parent
+              entry: smoothCell.modelData
+              appIndex: smoothCell.index
             }
           }
         }
@@ -659,39 +633,204 @@ Item {
         }
       }
 
-      // ---- Previous / next arrows --------------------------------------------
-      // `direction` is where the arrow sits and points: -1 left, 1 right.
-      component NavArrow: Rectangle {
-        id: arrow
-        property int direction: 1
-        signal clicked()
-        width: 46
-        height: 46
-        radius: 23
-        anchors.verticalCenter: parent.verticalCenter
-        color: root.inkAlpha(arrowHit.containsMouse ? 0.25 : 0.12)
-        border.width: 1
-        border.color: root.inkAlpha(0.2)
-        opacity: arrowHit.containsMouse ? 1 : 0.55
-        scale: arrowHit.containsMouse ? 1.1 : 1
-        Behavior on opacity { NumberAnimation { duration: Style.duration(180); easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: Style.duration(180); easing.type: Easing.OutCubic } }
+      // ---- One app: its icon and name --------------------------------------
+      component AppCell: Item {
+        id: cell
+        // The app, where it falls among all the apps, and whether it takes
+        // the pointer: a page out of view is built but must not.
+        property var entry: null
+        property int appIndex: 0
+        property bool live: true
+        readonly property bool launching: !!entry && root.launchingId === entry.id
+        // A press that moves is a drag toward the dock, not a click.
+        property bool moved: false
+        property point pressPoint
+        width: viewport.cellWidth
+        height: viewport.cellHeight
 
-        // Chevron: two strokes meeting at a point. Kept out of the mirroring a
-        // right-to-left layout applies, since the arrow itself is placed by side.
-        Repeater {
-          model: [-45, 45]
-          Rectangle {
-            required property int modelData
-            LayoutMirroring.enabled: false
-            x: 23 + arrow.direction * 4 - (arrow.direction > 0 ? width : 0)
-            y: 22
-            width: 10
-            height: 2.5
-            radius: 1.25
+        // Where the keyboard is.
+        Rectangle {
+          anchors.fill: appItem
+          anchors.margins: -Style.space(8)
+          radius: Style.cornerRadius
+          visible: root.cursorActive && cell.appIndex === root.selectedIndex
+          color: root.inkAlpha(0.14)
+          border.width: 1
+          border.color: root.inkAlpha(0.3)
+        }
+
+        Column {
+          id: appItem
+          anchors.centerIn: parent
+          width: Math.max(viewport.iconDraw, cell.width - Style.space(8))
+          spacing: root.labelGap
+
+          // The icon zooms toward the viewer and fades as its app starts.
+          scale: cell.launching ? 1.22 : 1
+          opacity: cell.launching ? 0 : 1
+          Behavior on scale {
+            enabled: root.opened
+            NumberAnimation { duration: Style.duration(180); easing.type: Easing.Bezier; easing.bezierCurve: Style.easeOut }
+          }
+          Behavior on opacity {
+            enabled: root.opened
+            NumberAnimation { duration: Style.duration(180); easing.type: Easing.OutCubic }
+          }
+
+          Item {
+            id: iconBox
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: viewport.iconDraw
+            height: viewport.iconDraw
+            scale: hit.pressed ? 0.96 : hit.containsMouse ? 1.1 : 1
+            Behavior on scale {
+              NumberAnimation {
+                duration: Style.duration(hit.pressed ? 80 : 180)
+                easing.type: Easing.Bezier
+                easing.bezierCurve: Style.easeOut
+              }
+            }
+
+            Image {
+              id: icon
+              anchors.fill: parent
+              source: root.appLibrary ? root.appLibrary.iconSource(cell.entry.icon) : ""
+              sourceSize.width: 256
+              sourceSize.height: 256
+              fillMode: Image.PreserveAspectFit
+              asynchronous: true
+              smooth: true
+              mipmap: true
+              visible: false
+              // An app whose own icon file is missing still gets a tile.
+              onStatusChanged: if (status === Image.Error)
+                source = Quickshell.iconPath("application-x-executable", true)
+            }
+            MultiEffect {
+              anchors.fill: icon
+              source: icon
+              shadowEnabled: true
+              shadowColor: "black"
+              shadowOpacity: hit.containsMouse ? 0.55 : 0.45
+              shadowBlur: hit.containsMouse ? 0.75 : 0.55
+              shadowVerticalOffset: hit.containsMouse ? 14 : 8
+            }
+          }
+
+          Text {
+            textFormat: Text.PlainText
+            visible: settings.showNames
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
+            elide: Text.ElideRight
             color: root.ink
-            rotation: modelData
-            transformOrigin: arrow.direction > 0 ? Item.Right : Item.Left
+            font.family: Style.font.family
+            font.pixelSize: root.labelSize
+            font.weight: Font.Medium
+            style: Text.Raised
+            styleColor: Util.alpha(root.shade, 0.8)
+            text: root.appLibrary ? root.appLibrary.entryName(cell.entry) : ""
+          }
+        }
+
+        MouseArea {
+          id: hit
+          anchors.fill: appItem
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          acceptedButtons: Qt.LeftButton | Qt.RightButton
+          enabled: cell.live
+          onPressed: function(event) {
+            cell.moved = false
+            cell.pressPoint = Qt.point(event.x, event.y)
+          }
+          // The keyboard's app follows the pointer when the pointer
+          // moves, not when a page slides under it.
+          onPositionChanged: function(event) {
+            if (!pressedButtons && !root.dragging) root.selectedIndex = cell.appIndex
+            if (!(pressedButtons & Qt.LeftButton)) return
+            if (!cell.moved && Math.hypot(event.x - cell.pressPoint.x, event.y - cell.pressPoint.y) > Style.space(4)) cell.moved = true
+            if (cell.moved) root.dragTo(cell.entry, hit.mapToItem(panel.contentItem, event.x, event.y))
+          }
+          onReleased: function(event) {
+            if (root.dragging && event.button === Qt.LeftButton) root.dropDrag()
+          }
+          onCanceled: if (root.dragging) root.dismiss()
+          onClicked: function(event) {
+            if (cell.moved) return
+            if (event.button === Qt.RightButton) {
+              root.openMenu(cell.entry, hit.mapToItem(panel.contentItem, event.x, event.y))
+              return
+            }
+            root.menuEntry = null
+            root.openApp(cell.entry)
+          }
+        }
+      }
+
+      // ---- Page arrows ---------------------------------------------------------
+      // One per side; the two on the axis the pages turn on show. `side` is
+      // where the arrow sits and points.
+      component NavArrow: Item {
+        id: arrow
+        property string side: "right"
+        readonly property bool alongX: side === "left" || side === "right"
+        readonly property int step: side === "left" ? -root.hSign : side === "right" ? root.hSign
+                                  : side === "top" ? -root.vSign : root.vSign
+        readonly property int target: root.page + step
+        // "edge" is a bar the length of its side; "chevron" has no backing.
+        readonly property bool edge: settings.arrows === "edge"
+        readonly property bool plain: settings.arrows === "chevron"
+        readonly property int knob: Style.space(46)
+
+        visible: root.paged && settings.arrows !== "off" && alongX === root.horizontal
+                 && target >= 0 && target < root.pageCount
+        width: edge && !alongX ? viewport.width : knob
+        height: edge && alongX ? viewport.height : knob
+        // By x rather than anchors so each arrow stays on the side it points
+        // to in every language.
+        x: side === "left" ? Style.space(20)
+         : side === "right" ? parent.width - panel.reserve - width - Style.space(20)
+         : viewport.x + (viewport.width - width) / 2
+        y: side === "top" ? viewport.y
+         : side === "bottom" ? viewport.y + viewport.height - height
+         : viewport.y + (viewport.height - height) / 2
+        opacity: arrowHit.containsMouse ? 1 : (edge ? 0.35 : 0.55)
+        Behavior on opacity { NumberAnimation { duration: Style.duration(180); easing.type: Easing.OutCubic } }
+
+        Rectangle {
+          anchors.fill: parent
+          visible: !arrow.plain
+          radius: arrow.edge ? Style.cornerRadius : width / 2
+          color: root.inkAlpha(arrowHit.containsMouse ? 0.25 : 0.12)
+          border.width: 1
+          border.color: root.inkAlpha(0.2)
+          scale: !arrow.edge && arrowHit.containsMouse ? 1.1 : 1
+          Behavior on scale { NumberAnimation { duration: Style.duration(180); easing.type: Easing.OutCubic } }
+        }
+
+        // Chevron: two strokes meeting at a point, drawn pointing right and
+        // turned to face the arrow's side.
+        Item {
+          anchors.centerIn: parent
+          width: 12
+          height: 12
+          scale: arrow.plain ? 1.8 : 1
+          rotation: arrow.side === "bottom" ? 90 : arrow.side === "left" ? 180 : arrow.side === "top" ? 270 : 0
+
+          Repeater {
+            model: [45, -45]
+            Rectangle {
+              required property int modelData
+              x: 1
+              y: 4.75
+              width: 10
+              height: 2.5
+              radius: 1.25
+              color: root.ink
+              rotation: modelData
+              transformOrigin: Item.Right
+            }
           }
         }
 
@@ -700,69 +839,88 @@ Item {
           anchors.fill: parent
           hoverEnabled: true
           cursorShape: Qt.PointingHandCursor
-          onClicked: arrow.clicked()
+          onClicked: root.goToPage(arrow.target)
         }
       }
 
-      // Placed by x rather than anchors so each arrow stays on the side it
-      // points to in every language; which page it turns to follows the layout.
-      NavArrow {
-        readonly property int step: Commons.I18n.rightToLeft ? 1 : -1
-        x: Style.space(20)
-        direction: -1
-        visible: root.page + step >= 0 && root.page + step < root.pageCount
-        onClicked: root.goToPage(root.page + step)
-      }
-      NavArrow {
-        readonly property int step: Commons.I18n.rightToLeft ? -1 : 1
-        x: parent.width - panel.reserve - width - Style.space(20)
-        direction: 1
-        visible: root.page + step >= 0 && root.page + step < root.pageCount
-        onClicked: root.goToPage(root.page + step)
-      }
+      NavArrow { side: "left" }
+      NavArrow { side: "right" }
+      NavArrow { side: "top" }
+      NavArrow { side: "bottom" }
 
-      // ---- Page dots: the active one stretches into a glowing pill -----------
-      Row {
+      // ---- Page indicator ------------------------------------------------------
+      // A row under the grid, or a column beside it when pages turn up and
+      // down. "pill" stretches the current page's dot into a glowing pill,
+      // "dots" keeps them all round, "numbers" writes "2 / 4".
+      Item {
         id: dots
-        anchors.horizontalCenter: viewport.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: Style.space(48)
-        height: 8
-        spacing: 10
+        readonly property bool numbers: settings.indicator === "numbers"
+        readonly property bool pill: settings.indicator === "pill"
+        readonly property bool sideways: !root.horizontal && !numbers
 
-        Repeater {
-          model: root.pageCount
-          delegate: Item {
-            id: dot
-            required property int index
-            readonly property bool active: index === root.page
-            width: active ? 22 : 8
-            height: 8
-            Behavior on width {
-              NumberAnimation { duration: Style.duration(200); easing.type: Easing.Bezier; easing.bezierCurve: Style.easeOut }
-            }
+        visible: root.paged && settings.indicator !== "off"
+        width: numbers ? count.implicitWidth : marks.width
+        height: numbers ? count.implicitHeight : marks.height
+        x: sideways ? parent.width - panel.reserve - width - Style.space(34)
+                    : viewport.x + (viewport.width - width) / 2
+        y: sideways ? viewport.y + (viewport.height - height) / 2
+                    : parent.height - Style.space(48) - height
 
-            Rectangle {
-              anchors.fill: parent
-              radius: 4
-              color: dot.active ? root.ink : root.inkAlpha(dotHit.containsMouse ? 0.75 : 0.38)
-              scale: !dot.active && dotHit.containsMouse ? 1.25 : 1
-              Behavior on color { ColorAnimation { duration: Style.duration(200); easing.type: Easing.OutCubic } }
-              layer.enabled: dot.active
-              layer.effect: MultiEffect {
-                shadowEnabled: true
-                shadowColor: root.ink
-                shadowOpacity: 0.75
-                shadowBlur: 0.5
+        Text {
+          id: count
+          visible: dots.numbers
+          textFormat: Text.PlainText
+          text: strings.t("pages.count").arg(Commons.I18n.formatNumber(root.page + 1, 0))
+                                        .arg(Commons.I18n.formatNumber(Math.max(1, root.pageCount), 0))
+          color: root.inkAlpha(0.8)
+          font.family: Style.font.family
+          font.pixelSize: Style.font.title
+        }
+
+        Grid {
+          id: marks
+          visible: !dots.numbers
+          columns: dots.sideways ? 1 : Math.max(1, root.pageCount)
+          spacing: 10
+
+          Repeater {
+            model: dots.numbers ? 0 : root.pageCount
+            delegate: Item {
+              id: dot
+              required property int index
+              readonly property bool active: index === root.page
+              readonly property int along: active && dots.pill ? 22 : 8
+              width: dots.sideways ? 8 : along
+              height: dots.sideways ? along : 8
+              Behavior on width {
+                NumberAnimation { duration: Style.duration(200); easing.type: Easing.Bezier; easing.bezierCurve: Style.easeOut }
               }
-            }
-            MouseArea {
-              id: dotHit
-              anchors.fill: parent
-              anchors.margins: -5
-              hoverEnabled: true
-              cursorShape: Qt.PointingHandCursor
-              onClicked: root.goToPage(dot.index)
+              Behavior on height {
+                NumberAnimation { duration: Style.duration(200); easing.type: Easing.Bezier; easing.bezierCurve: Style.easeOut }
+              }
+
+              Rectangle {
+                anchors.fill: parent
+                radius: 4
+                color: dot.active ? root.ink : root.inkAlpha(dotHit.containsMouse ? 0.75 : 0.38)
+                scale: !dot.active && dotHit.containsMouse ? 1.25 : 1
+                Behavior on color { ColorAnimation { duration: Style.duration(200); easing.type: Easing.OutCubic } }
+                layer.enabled: dot.active && dots.pill
+                layer.effect: MultiEffect {
+                  shadowEnabled: true
+                  shadowColor: root.ink
+                  shadowOpacity: 0.75
+                  shadowBlur: 0.5
+                }
+              }
+              MouseArea {
+                id: dotHit
+                anchors.fill: parent
+                anchors.margins: -5
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.goToPage(dot.index)
+              }
             }
           }
         }
@@ -777,6 +935,8 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         store: settings
         catalog: strings
+        dock: root.dock
+        maxHeight: parent.height - Style.space(80)
         onCloseRequested: root.settingsOpen = false
       }
     }

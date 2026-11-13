@@ -44,11 +44,11 @@ PanelWindow {
   readonly property bool autohide: !!dock && (dock.autohide || fullscreenMode === 1)
   property bool revealed: false
   readonly property bool menuOpen: menuItem !== null || settingsMenu
-  readonly property bool tucked: autohide && !(revealed || menuOpen || dragging || insertIndex >= 0)
+  readonly property bool tucked: autohide && !(revealed || menuOpen || dragging || insertIndex >= 0 || (!!dock && dock.moveActive))
   readonly property bool contentShown: shown && !tucked
 
   readonly property int gap: Style.spacing.xs
-  readonly property int iconSize: Math.round(36 * Style.fontScale)
+  readonly property int iconSize: Math.round((dock ? dock.iconSize : 36) * Style.fontScale)
   // Each app has a square slot with its icon in the middle, and the slots run
   // straight to the edge of the dock.
   readonly property int iconInset: Style.spacing.md
@@ -359,7 +359,67 @@ PanelWindow {
       y: window.vertical ? appsSlot.displayedShift : 0
     }
 
+    // Held or dragged with the left button, the apps button takes the dock
+    // with it to another screen edge, the way empty bar space moves the bar.
+    property bool moving: false
+    property bool suppressClick: false
+    property point pressedAt
+
+    function screenPoint(event) {
+      var scene = appsSlot.mouse.mapToItem(window.contentItem, event.x, event.y)
+      var origin = window.origin()
+      return { x: origin.x + scene.x, y: origin.y + scene.y }
+    }
+
+    function startMove(event) {
+      if (moving || !window.dock) return
+      moving = true
+      window.closeMenu()
+      window.dock.beginMove(window.screen)
+      window.dock.updateMove(screenPoint(event))
+    }
+
+    mouse.pressAndHoldInterval: 200
+    mouse.cursorShape: moving ? Qt.ClosedHandCursor : Qt.PointingHandCursor
+
+    mouse.onPressed: function(event) {
+      moving = false
+      suppressClick = false
+      pressedAt = Qt.point(event.x, event.y)
+    }
+
+    mouse.onPressAndHold: function(event) {
+      if (appsSlot.mouse.pressedButtons & Qt.LeftButton) startMove(event)
+    }
+
+    mouse.onPositionChanged: function(event) {
+      if (!(event.buttons & Qt.LeftButton)) return
+      if (!moving) {
+        if (Math.abs(event.x - pressedAt.x) + Math.abs(event.y - pressedAt.y) < Style.space(4)) return
+        startMove(event)
+        return
+      }
+      window.dock.updateMove(screenPoint(event))
+    }
+
+    mouse.onReleased: function(event) {
+      if (!moving) return
+      moving = false
+      suppressClick = true
+      window.dock.finishMove()
+    }
+
+    mouse.onCanceled: {
+      moving = false
+      suppressClick = false
+      if (window.dock) window.dock.clearMove()
+    }
+
     mouse.onClicked: function(event) {
+      if (suppressClick) {
+        suppressClick = false
+        return
+      }
       if (event.button === Qt.RightButton) {
         window.openSettingsMenu(appsSlot)
         return
@@ -563,7 +623,7 @@ PanelWindow {
           visible: window.settingsMenu
           text: modelData[1]
           checked: window.position === modelData[0]
-          onTriggered: Util.execDetached("omarchy-dock position " + modelData[0])
+          onTriggered: window.dock.setPosition(modelData[0])
         }
       }
 
@@ -571,7 +631,7 @@ PanelWindow {
         visible: window.settingsMenu
         text: strings.t("dock.autoHide")
         checked: window.autohide
-        onTriggered: Util.execDetached("omarchy-dock autohide " + (window.autohide ? "off" : "on"))
+        onTriggered: window.dock.setAutohide(!window.autohide)
       }
 
       MenuRow {

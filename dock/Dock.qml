@@ -2,12 +2,18 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
+import Quickshell.Wayland
 import qs.Commons
+import qs.Commons as Commons
+import qs.Ui
+import ".." as Launchpad
 import "DockModel.js" as DockModel
 
 // Omarchy's dock (shell/plugins/dock, MIT, see LICENSE beside this file) with
-// two changes: the apps button opens Launchpad, and its menu has a Launchpad
-// settings row. Everything else is the stock dock.
+// these changes: the apps button opens Launchpad, its menu has a Launchpad
+// settings row, holding it moves the dock to another screen edge the way the
+// bar moves, and the icon size is a Launchpad setting. Everything else is the
+// stock dock.
 //
 // An app dock that shows on floating workspaces. A floating workspace has no
 // tiles to hand the apps out, so the dock gives back a place to find them:
@@ -254,6 +260,59 @@ Item {
 
   readonly property string pluginId: (manifest && manifest.id) || "launchpad"
 
+  // Launchpad's settings hold the dock's icon size.
+  Launchpad.LauncherSettings { id: prefs }
+  readonly property int iconSize: prefs.dockIconSize
+
+  function setPosition(edge) {
+    if (DockModel.POSITIONS.indexOf(edge) >= 0) Util.execDetached("omarchy-dock position " + edge)
+  }
+
+  function setAutohide(on) {
+    Util.execDetached("omarchy-dock autohide " + (on ? "on" : "off"))
+  }
+
+  // Moving the dock: held by its apps button, it goes to the screen edge
+  // nearest the pointer, shown as a slab along that edge until it is let go.
+  // The same gesture as moving the bar.
+  property bool moveActive: false
+  property string moveCandidate: ""
+  property var moveScreen: null
+
+  function nearestScreenEdge(point, screen) {
+    var nx = screen.width > 0 ? Util.clamp(point.x / screen.width, 0, 1) : 0.5
+    var ny = screen.height > 0 ? Util.clamp(point.y / screen.height, 0, 1) : 0.5
+    var edge = "top"
+    var best = ny
+    if (1 - ny < best) { edge = "bottom"; best = 1 - ny }
+    if (nx < best) { edge = "left"; best = nx }
+    if (1 - nx < best) { edge = "right"; best = 1 - nx }
+    return edge
+  }
+
+  function beginMove(screen) {
+    moveScreen = screen
+    moveCandidate = position
+    moveActive = true
+  }
+
+  function updateMove(screenPoint) {
+    if (moveActive && moveScreen) moveCandidate = nearestScreenEdge(screenPoint, moveScreen)
+  }
+
+  function clearMove() {
+    moveActive = false
+    moveCandidate = ""
+    moveScreen = null
+  }
+
+  function finishMove() {
+    var edge = moveCandidate
+    var moved = moveActive && !!edge && edge !== position
+    clearMove()
+    if (moved) setPosition(edge)
+  }
+
   // The apps button toggles Launchpad, which this plugin also provides.
   function openApps() {
     if (root.shell) root.shell.toggle(root.pluginId, "{}")
@@ -419,6 +478,54 @@ Item {
   function endExternalDrag() {
     var windows = docks.instances
     for (var i = 0; i < windows.length; i++) windows[i].endExternalDrag()
+  }
+
+  // The slab that previews where a moved dock would land. It takes no input,
+  // so the apps button keeps the pointer for the whole gesture.
+  Variants {
+    model: Quickshell.screens
+
+    delegate: Component {
+      PanelWindow {
+        id: ghost
+
+        required property var modelData
+        readonly property int thickness: Math.round(root.iconSize * Style.fontScale) + Style.spacing.md * 4
+
+        screen: modelData
+        visible: root.moveActive && !!root.moveScreen && root.moveScreen.name === modelData.name
+        color: "transparent"
+        exclusionMode: ExclusionMode.Ignore
+        WlrLayershell.namespace: "omarchy-dock-move-ghost"
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        anchors { top: true; bottom: true; left: true; right: true }
+        mask: Region {}
+
+        // One slab per edge, faded between, as the bar does.
+        Repeater {
+          model: DockModel.POSITIONS
+
+          BorderSurface {
+            required property string modelData
+            readonly property bool edgeVertical: DockModel.isVertical(modelData)
+
+            x: modelData === "right" ? parent.width - ghost.thickness : 0
+            y: modelData === "bottom" ? parent.height - ghost.thickness : 0
+            width: edgeVertical ? ghost.thickness : parent.width
+            height: edgeVertical ? parent.height : ghost.thickness
+            color: Commons.Color.popups.background
+            borderSpec: Border.flat(Commons.Color.popups.text, 1)
+            visible: opacity > 0
+            opacity: root.moveCandidate === modelData ? 0.7 : 0
+
+            Behavior on opacity {
+              NumberAnimation { duration: Style.duration(140); easing.type: Easing.OutCubic }
+            }
+          }
+        }
+      }
+    }
   }
 
   Variants {

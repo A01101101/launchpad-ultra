@@ -18,7 +18,17 @@ Item {
     showNames: { value: true },
     backdrop: { value: 0.34, min: 0.31, max: 0.9 },
     followTheme: { value: false },
-    rememberPage: { value: false }
+    rememberPage: { value: false },
+    // "pages" turns whole pages; "smooth" is one long grid that scrolls.
+    scrollStyle: { value: "pages", options: ["pages", "smooth"] },
+    // The side the next page comes in from.
+    slideFrom: { value: "right", options: ["right", "left", "bottom", "top"] },
+    indicator: { value: "pill", options: ["pill", "dots", "numbers", "off"] },
+    arrows: { value: "round", options: ["round", "chevron", "edge", "off"] },
+    // A click on empty space closes Launchpad or turns the page.
+    emptyClick: { value: "close", options: ["close", "page"] },
+    scrollSensitivity: { value: 3, min: 1, max: 5 },
+    dockIconSize: { value: 36, min: 24, max: 64 }
   })
 
   // What is in effect now, defaults filled in.
@@ -31,6 +41,13 @@ Item {
   readonly property real backdrop: values.backdrop
   readonly property bool followTheme: values.followTheme
   readonly property bool rememberPage: values.rememberPage
+  readonly property string scrollStyle: values.scrollStyle
+  readonly property string slideFrom: values.slideFrom
+  readonly property string indicator: values.indicator
+  readonly property string arrows: values.arrows
+  readonly property string emptyClick: values.emptyClick
+  readonly property int scrollSensitivity: values.scrollSensitivity
+  readonly property int dockIconSize: values.dockIconSize
 
   readonly property bool isDefault: {
     for (var key in spec) if (values[key] !== spec[key].value) return false
@@ -45,6 +62,7 @@ Item {
       var rule = spec[key]
       var value = stored ? stored[key] : undefined
       if (typeof value !== typeof rule.value || (typeof value === "number" && !isFinite(value))) value = rule.value
+      if (rule.options && rule.options.indexOf(value) === -1) value = rule.value
       if (typeof value === "number") {
         value = Math.max(rule.min, Math.min(rule.max, value))
         if (Math.round(rule.value) === rule.value) value = Math.round(value)
