@@ -197,6 +197,29 @@ BorderSurface {
       SliderRow { label: card.catalog.t("settings.iconSize"); key: "iconSize"; minimum: 56; maximum: 128; step: 2 }
       SettingSwitch { label: card.catalog.t("settings.showNames"); key: "showNames" }
 
+      PanelSectionHeader { text: card.catalog.t("settings.search"); foreground: card.ink }
+      SliderRow {
+        label: card.catalog.t("settings.searchSize")
+        key: "searchSize"
+        minimum: 60
+        maximum: 180
+        step: 5
+        format: function(value) { return card.catalog.t("settings.percent").arg(Commons.I18n.formatNumber(value, 0)) }
+      }
+      SliderRow {
+        label: card.catalog.t("settings.searchBorder")
+        key: "searchBorder"
+        minimum: 0
+        maximum: 6
+        format: function(value) { return value < 1 ? card.catalog.t("settings.none") : Commons.I18n.formatNumber(value, 0) }
+      }
+      SettingSwitch { label: card.catalog.t("settings.sortBox"); key: "sortBox" }
+      SettingChoice {
+        label: card.catalog.t("settings.sortBy")
+        key: "sortBy"
+        options: [card.option("alpha", "sort.alpha"), card.option("used", "sort.used")]
+      }
+
       PanelSectionHeader { text: card.catalog.t("settings.pages"); foreground: card.ink }
       SettingChoice {
         label: card.catalog.t("settings.scrollStyle")

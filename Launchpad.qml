@@ -155,9 +155,19 @@ Item {
 
   // The shell's own app list: the same apps, search and hidden entries as the
   // Omarchy launcher.
+  // A search keeps the shell's own ranking. Otherwise the apps come by name,
+  // or most opened first with names breaking ties, as the sort setting says.
   function rebuild() {
     var found = appLibrary ? appLibrary.sortedEntries(query) : []
-    apps = found.map(function(row) { return row.entry })
+    var entries = found.map(function(row) { return row.entry })
+    if (query === "" && settings.sortBy === "used") {
+      var rank = {}
+      for (var i = 0; i < entries.length; i++) rank[entries[i].id] = i
+      entries.sort(function(a, b) {
+        return (usage.count(b.id) - usage.count(a.id)) || (rank[a.id] - rank[b.id])
+      })
+    }
+    apps = entries
     selectedIndex = Math.max(0, Math.min(selectedIndex, apps.length - 1))
     goToPage(page)
   }
@@ -236,6 +246,7 @@ Item {
   function openApp(entry) {
     if (!entry || !appLibrary || launchingId !== "") return
     launchingId = entry.id
+    usage.record(entry.id)
     appLibrary.launch(entry.id, appLibrary.entryName(entry))
     closeTimer.start()
   }
@@ -248,6 +259,13 @@ Item {
   }
 
   LauncherSettings { id: settings }
+  UsageStore { id: usage }
+  // The order follows the setting at once. Counts are read when Launchpad
+  // opens, so apps do not shuffle while it is open.
+  readonly property string sortBy: settings.sortBy
+  onSortByChanged: rebuild()
+  // The search bar's size setting, as a factor.
+  readonly property real searchScale: settings.searchSize / 100
   Commons.Translations { id: strings; directory: Qt.resolvedUrl("i18n") }
 
   OverlayWindow {
@@ -327,11 +345,11 @@ Item {
         anchors.top: parent.top
         anchors.topMargin: Style.space(36)
         anchors.horizontalCenter: viewport.horizontalCenter
-        width: Style.space(filled ? 440 : 340)
-        height: Style.space(38)
+        width: Math.round(Style.space(filled ? 440 : 340) * root.searchScale)
+        height: Math.round(Style.space(38) * root.searchScale)
         radius: height / 2
         color: root.inkAlpha(filled ? 0.26 : 0.16)
-        border.width: 1
+        border.width: settings.searchBorder
         border.color: root.inkAlpha(filled ? 0.45 : 0.22)
 
         Behavior on width {
@@ -344,7 +362,8 @@ Item {
 
         // Magnifier glyph.
         Item {
-          x: Style.space(12)
+          x: Style.space(12) * root.searchScale
+          scale: root.searchScale
           anchors.verticalCenter: parent.verticalCenter
           width: 16
           height: 16
@@ -371,7 +390,7 @@ Item {
           text: strings.t("search.placeholder")
           color: root.inkAlpha(0.6)
           font.family: Style.font.family
-          font.pixelSize: Style.font.title
+          font.pixelSize: Math.round(Style.font.title * root.searchScale)
           visible: !searchPill.filled
         }
 
@@ -379,13 +398,13 @@ Item {
         TextInput {
           id: searchInput
           anchors.fill: parent
-          anchors.leftMargin: Style.space(38)
-          anchors.rightMargin: Style.space(36)
+          anchors.leftMargin: Style.space(38) * root.searchScale
+          anchors.rightMargin: Style.space(36) * root.searchScale
           verticalAlignment: TextInput.AlignVCenter
           color: root.ink
           selectionColor: Commons.Color.accent
           font.family: Style.font.family
-          font.pixelSize: Style.font.title
+          font.pixelSize: Math.round(Style.font.title * root.searchScale)
           clip: true
           focus: true
 
@@ -438,9 +457,9 @@ Item {
         // Clear button.
         Rectangle {
           anchors.right: parent.right
-          anchors.rightMargin: Style.space(10)
+          anchors.rightMargin: Style.space(10) * root.searchScale
           anchors.verticalCenter: parent.verticalCenter
-          width: Style.space(18)
+          width: Math.round(Style.space(18) * root.searchScale)
           height: width
           radius: width / 2
           color: root.inkAlpha(0.25)
@@ -456,6 +475,61 @@ Item {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
             onClicked: searchInput.clear()
+          }
+        }
+      }
+
+      // ---- Sort box, beside the search bar when the settings ask for it ------
+      Rectangle {
+        id: sortBox
+        visible: settings.sortBox
+        anchors.verticalCenter: searchPill.verticalCenter
+        // By x so it stays on the far side of the bar in every language.
+        x: searchPill.x + searchPill.width + Style.space(12)
+        width: sortRow.width + Style.space(8)
+        height: Style.space(38)
+        radius: height / 2
+        color: root.inkAlpha(0.16)
+        border.width: settings.searchBorder
+        border.color: root.inkAlpha(0.22)
+
+        // Swallow clicks so they don't dismiss the launcher.
+        MouseArea { anchors.fill: parent }
+
+        Row {
+          id: sortRow
+          anchors.centerIn: parent
+          spacing: Style.space(2)
+
+          Repeater {
+            model: ["alpha", "used"]
+            delegate: Rectangle {
+              id: sortChoice
+              required property string modelData
+              readonly property bool chosen: settings.sortBy === modelData
+              width: sortLabel.implicitWidth + Style.space(24)
+              height: sortBox.height - Style.space(8)
+              radius: height / 2
+              color: chosen ? root.inkAlpha(0.3) : sortHit.containsMouse ? root.inkAlpha(0.12) : "transparent"
+              Behavior on color { ColorAnimation { duration: Style.duration(180); easing.type: Easing.OutCubic } }
+
+              Text {
+                id: sortLabel
+                anchors.centerIn: parent
+                textFormat: Text.PlainText
+                text: sortChoice.modelData === "used" ? strings.t("sort.used") : strings.t("sort.alpha")
+                color: root.inkAlpha(sortChoice.chosen ? 1 : 0.7)
+                font.family: Style.font.family
+                font.pixelSize: Style.font.body
+              }
+              MouseArea {
+                id: sortHit
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: settings.set("sortBy", sortChoice.modelData)
+              }
+            }
           }
         }
       }

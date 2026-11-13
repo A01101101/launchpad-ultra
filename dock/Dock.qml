@@ -206,7 +206,9 @@ Item {
   }
 
   function launchEntry(entry) {
-    if (entry && root.appLibrary) root.appLibrary.launch(entry.id, entry.name)
+    if (!entry || !root.appLibrary) return
+    usage.record(entry.id)
+    root.appLibrary.launch(entry.id, entry.name)
   }
 
   function activate(item) {
@@ -262,6 +264,8 @@ Item {
 
   // Launchpad's settings hold the dock's icon size.
   Launchpad.LauncherSettings { id: prefs }
+  // Apps opened from the dock count toward Launchpad's "most used" order.
+  Launchpad.UsageStore { id: usage }
   readonly property int iconSize: prefs.dockIconSize
 
   function setPosition(edge) {

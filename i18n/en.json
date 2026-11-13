@@ -54,5 +54,13 @@
   "settings.dock": "Dock",
   "settings.dockPosition": "Position",
   "settings.dockIconSize": "Icon size",
-  "pages.count": "%1 / %2"
+  "pages.count": "%1 / %2",
+  "settings.search": "Search bar",
+  "settings.searchSize": "Size",
+  "settings.searchBorder": "Border",
+  "settings.none": "None",
+  "settings.sortBox": "Show sort box",
+  "settings.sortBy": "Sort apps by",
+  "sort.alpha": "A–Z",
+  "sort.used": "Most used"
 }

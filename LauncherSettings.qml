@@ -28,7 +28,13 @@ Item {
     // A click on empty space closes Launchpad or turns the page.
     emptyClick: { value: "close", options: ["close", "page"] },
     scrollSensitivity: { value: 3, min: 1, max: 5 },
-    dockIconSize: { value: 36, min: 24, max: 64 }
+    dockIconSize: { value: 36, min: 24, max: 64 },
+    // The search bar's size, in percent, and its border in pixels (0 is none).
+    searchSize: { value: 100, min: 60, max: 180 },
+    searchBorder: { value: 1, min: 0, max: 6 },
+    // Whether the sort box shows beside the search bar, and the order chosen.
+    sortBox: { value: false },
+    sortBy: { value: "alpha", options: ["alpha", "used"] }
   })
 
   // What is in effect now, defaults filled in.
@@ -48,6 +54,10 @@ Item {
   readonly property string emptyClick: values.emptyClick
   readonly property int scrollSensitivity: values.scrollSensitivity
   readonly property int dockIconSize: values.dockIconSize
+  readonly property int searchSize: values.searchSize
+  readonly property int searchBorder: values.searchBorder
+  readonly property bool sortBox: values.sortBox
+  readonly property string sortBy: values.sortBy
 
   readonly property bool isDefault: {
     for (var key in spec) if (values[key] !== spec[key].value) return false
