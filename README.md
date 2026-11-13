@@ -8,9 +8,10 @@ It is a shell plugin, so it opens instantly, lists whatever apps are installed
 on your machine, and uses the same search and hidden-app settings as the
 Omarchy launcher.
 
-It also brings its own dock: Omarchy's dock, unchanged except that the apps
-button opens Launchpad and its right-click menu has a **Launchpad settings**
-row. Enabling the plugin switches the built-in dock off; removing the plugin
+It also brings its own dock: Omarchy's dock, with the apps button opening
+Launchpad, a **Launchpad settings** row in its right-click menu, an icon size
+setting, and hold-to-move: hold or drag the apps button and the dock follows
+the pointer to the nearest screen edge, the way the bar moves. Enabling the plugin switches the built-in dock off; removing the plugin
 brings it back. `omarchy dock` and the dock's settings in `shell.json` keep
 working as before.
 
@@ -51,6 +52,20 @@ you change things.
 | Backdrop darkness | 31% to 90% | 34% |
 | Use theme colors | on / off | off (dark glass, white text) |
 | Reopen on the last page | on / off | off |
+| Scrolling | Pages / Smooth (one long grid that scrolls) | Pages |
+| Scroll sensitivity | 1 to 5 | 3 |
+| Next page comes from | Right / Left / Below / Above | Right |
+| Page indicator | Pill / Dots / Numbers / Off | Pill |
+| Page arrows | Round / Plain / Edge / Off | Round |
+| Click on empty space | Close / Turn page | Close |
+| Dock position | Top / Bottom / Left / Right | Omarchy's |
+| Dock auto-hide | on / off | Omarchy's |
+| Dock icon size | 24 to 64 | 36 |
+
+The direction, indicator, arrow and empty-click settings apply when scrolling
+by pages and are greyed out in smooth mode. With "Turn page", a right-click on
+empty space still closes Launchpad. Dock position and auto-hide are Omarchy's
+own dock settings, the same ones `omarchy dock` changes.
 
 They are saved in `~/.config/omarchy/launchpad.json`, which you can also edit
 by hand, and scripts can change them while the shell runs:
