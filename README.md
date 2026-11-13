@@ -58,9 +58,18 @@ you change things.
 | Page indicator | Pill / Dots / Numbers / Off | Pill |
 | Page arrows | Round / Plain / Edge / Off | Round |
 | Click on empty space | Close / Turn page | Close |
+| Search bar size | 60% to 180% | 100% |
+| Search bar border | None to 6 | 1 |
+| Show sort box | on / off | off |
+| Sort apps by | A–Z / Most used | A–Z |
 | Dock position | Top / Bottom / Left / Right | Omarchy's |
 | Dock auto-hide | on / off | Omarchy's |
 | Dock icon size | 24 to 64 | 36 |
+
+The sort box sits beside the search bar. "Most used" counts how often each app
+is opened from Launchpad or its dock, kept in
+`~/.local/state/omarchy/launchpad-usage.json`; apps opened any other way are
+not counted. A search always shows the best matches first.
 
 The direction, indicator, arrow and empty-click settings apply when scrolling
 by pages and are greyed out in smooth mode. With "Turn page", a right-click on
