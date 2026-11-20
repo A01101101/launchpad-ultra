@@ -419,22 +419,16 @@ Item {
         readonly property bool band: look === "band"
         // A sheet of warm paper with a small label above it.
         readonly property bool paper: look === "paper"
-        // A fine-bordered field joined to a solid accent button.
+        // A fine-bordered square field.
         readonly property bool split: look === "split"
-        // Looks that end in an arrow.
-        readonly property bool arrowed: headline || band || split
         readonly property color pillInk: win98 ? "#000000" : paper ? "#1d1b16" : band ? root.shade : root.ink
         readonly property string face: lcd ? "monospace" : win98 ? "Tahoma" : band ? "Noto Serif" : Style.font.family
         readonly property real fontPx: headline ? Math.round(height * 0.78)
                                        : Math.round(Style.font.title * searchPill.fit * (win98 ? 0.92 : band ? 1.08 : 1))
         // The room the paper look's label takes above the field.
         readonly property real headRoom: paper ? Math.round(Style.space(20) * Math.max(0.8, Math.min(1.5, fit))) : 0
-        // The split look's button, and the room any arrow takes at the end.
-        readonly property real tailRoom: split ? height : arrowed ? Style.space(34) * fit : 0
         // The looking glass's color.
-        readonly property color glassInk: root.lcd || settings.glassTint === "ink" ? pillInk
-                                          : settings.glassTint === "accent" ? (band ? pillInk : Commons.Color.accent)
-                                          : settings.tints[settings.glassTint]
+        readonly property color glassInk: pillInk
         readonly property bool lit: filled || searchInput.activeFocus
         // The size setting is a wish: the bar shrinks to whatever fits around
         // its centre, so it is never cut off by the screen's edges (or runs
@@ -541,35 +535,6 @@ Item {
           font.pixelSize: Math.round(searchPill.headRoom * 0.52)
         }
 
-        // Split: the accent button the field is joined to.
-        Rectangle {
-          visible: searchPill.split
-          anchors.right: parent.right
-          width: searchPill.tailRoom
-          height: parent.height
-          color: Commons.Color.accent
-        }
-        // The arrow the headline, band and split looks end in. It opens the
-        // first match, like Enter.
-        Text {
-          visible: searchPill.arrowed
-          textFormat: Text.PlainText
-          anchors.right: parent.right
-          width: searchPill.tailRoom
-          height: parent.height
-          horizontalAlignment: Text.AlignHCenter
-          verticalAlignment: Text.AlignVCenter
-          text: "→"
-          color: searchPill.split ? root.shade : searchPill.pillInk
-          opacity: searchPill.filled || searchPill.split ? 1 : 0.6
-          font.pixelSize: Math.round(Style.font.title * 1.2 * searchPill.fit)
-          MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: if (root.query !== "" && root.apps.length > 0) root.openApp(root.apps[0])
-          }
-        }
-
         Behavior on width {
           NumberAnimation { duration: Style.duration(220); easing.type: Easing.Bezier; easing.bezierCurve: Style.easeOut }
         }
@@ -602,7 +567,7 @@ Item {
           scale: searchPill.fit * settings.glassSize / 100
           style: settings.glassStyle
           color: searchPill.glassInk
-          opacity: settings.glassTint === "ink" || root.lcd ? 0.7 : 1
+          opacity: 0.7
         }
 
         // The word, rotating lines, the head scratcher, or the yellow LCD's
@@ -631,7 +596,7 @@ Item {
           // The text starts after the looking glass, however big it is.
           anchors.leftMargin: settings.glassStyle === "off" ? Style.space(16) * searchPill.fit
                               : (Style.space(12) + 16 * settings.glassSize / 100 + Style.space(10)) * searchPill.fit
-          anchors.rightMargin: Style.space(36) * searchPill.fit + searchPill.tailRoom
+          anchors.rightMargin: Style.space(36) * searchPill.fit
           verticalAlignment: TextInput.AlignVCenter
           color: searchPill.pillInk
           selectionColor: searchPill.lcd ? Util.alpha(root.ink, 0.35) : searchPill.win98 ? "#000080"
@@ -724,7 +689,7 @@ Item {
         // Clear button.
         Rectangle {
           anchors.right: parent.right
-          anchors.rightMargin: Style.space(10) * searchPill.fit + searchPill.tailRoom
+          anchors.rightMargin: Style.space(10) * searchPill.fit
           anchors.verticalCenter: parent.verticalCenter
           width: Math.round(Style.space(18) * searchPill.fit)
           height: width

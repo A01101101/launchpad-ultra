@@ -65,9 +65,8 @@ you change things.
 | Page indicator | Pill / Dots / Numbers / Off | Pill |
 | Page arrows | Round / Plain / Edge / Off | Round |
 | Click on empty space | Close / Turn page | Close |
-| Search look | Glass / Plain / Win98 / Hairline (thin outlined pill) / Headline (giant capitals over a rule) / Band (accent-colored, serif type) / Paper (labelled sheet) / Split (field joined to an accent button) | Glass |
+| Search look | Glass / Plain / Win98 / Hairline (thin outlined pill) / Headline (giant capitals over a rule) / Band (accent-colored, serif type) / Paper (labelled sheet) / Split (fine-bordered square field) | Glass |
 | Looking glass style | Classic / Fine / Bold / Filled / Square / Pixel / Arrow / Dot / Off | Classic |
-| Looking glass color | Text color / Accent / Gold / Red / Green / Blue / Pink | Text color |
 | Looking glass size | 60% to 200% | 100% |
 | Search underline | on / off (Plain look) | on |
 | Search cursor | Line / Block / Underscore | Line |

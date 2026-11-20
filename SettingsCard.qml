@@ -20,11 +20,6 @@ Rectangle {
   signal closeRequested()
 
   readonly property bool paged: store.scrollStyle === "pages"
-  // A looking-glass color by name; "ink" and "accent" follow the screen.
-  function tintColor(name) {
-    return name === "ink" ? card.ink : name === "accent" ? Commons.Color.accent : store.tints[name]
-  }
-  readonly property color glassInk: lcd ? ink : tintColor(store.glassTint)
 
   // The card keeps one size on every tab; only the settings inside scroll.
   readonly property real inset: Style.space(20)
@@ -490,7 +485,7 @@ Rectangle {
                   anchors.centerIn: parent
                   scale: 1.25
                   style: styleTile.modelData
-                  color: card.glassInk
+                  color: card.ink
                 }
                 Label {
                   visible: styleTile.modelData === "off"
@@ -498,33 +493,6 @@ Rectangle {
                   opacity: 0.7
                   font.pixelSize: Style.font.caption
                   text: card.catalog.t("settings.off")
-                }
-              }
-            }
-          }
-        }
-        Column {
-          visible: !card.lcd
-          width: parent.width
-          spacing: Style.spacing.sm
-          opacity: card.store.glassStyle === "off" ? 0.4 : 1
-          Label { text: card.catalog.t("settings.glassTint"); width: parent.width }
-          Flow {
-            width: parent.width
-            spacing: Style.spacing.sm
-            Repeater {
-              model: card.store.spec.glassTint.options
-              delegate: Tile {
-                id: tintTile
-                required property string modelData
-                chosen: card.store.glassTint === modelData
-                onPicked: card.store.set("glassTint", modelData)
-                Rectangle {
-                  anchors.centerIn: parent
-                  width: Style.space(20)
-                  height: width
-                  radius: width / 2
-                  color: card.tintColor(tintTile.modelData)
                 }
               }
             }

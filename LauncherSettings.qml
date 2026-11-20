@@ -42,13 +42,12 @@ Item {
     lcdShadow: { value: 3, min: 0, max: 12 },
     // The search bar's look, caret, and underline (for the plain look).
     // Past the first three: a thin outlined pill, giant capitals over a rule,
-    // a serif band of the accent color, labelled paper, and a field joined
-    // to an accent button.
+    // a serif band of the accent color, labelled paper, and a fine-bordered
+    // square field.
     searchLook: { value: "glass", options: ["glass", "plain", "win98", "hairline", "headline", "band", "paper", "split"] },
     // The looking glass in the search bar: its drawing, color and size in
     // percent.
     glassStyle: { value: "classic", options: ["classic", "fine", "bold", "filled", "square", "pixel", "arrow", "dot", "off"] },
-    glassTint: { value: "ink", options: ["ink", "accent", "gold", "red", "green", "blue", "pink"] },
     glassSize: { value: 100, min: 60, max: 200 },
     searchUnderline: { value: true },
     searchCaret: { value: "line", options: ["line", "block", "underscore"] },
@@ -108,10 +107,8 @@ Item {
   readonly property color lcdInk: lcdTints[lcdTint].ink
   readonly property string searchLook: values.searchLook
   readonly property string glassStyle: values.glassStyle
-  readonly property string glassTint: values.glassTint
   readonly property int glassSize: values.glassSize
   // The looking glass's fixed colors. "ink" and "accent" follow the screen.
-  readonly property var tints: ({ gold: "#f5c542", red: "#ff5a5f", green: "#4cd964", blue: "#4aa8ff", pink: "#ff6ec7" })
   readonly property bool searchUnderline: values.searchUnderline
   readonly property string searchCaret: values.searchCaret
   readonly property bool searchBlink: values.searchBlink
