@@ -49,7 +49,7 @@
   "settings.off": "Off",
   "settings.emptyClick": "Click on empty space",
   "settings.emptyClick.close": "Close",
-  "settings.emptyClick.page": "Turn page (double-click closes)",
+  "settings.emptyClick.page": "Turn page",
   "settings.scrollSensitivity": "Scroll sensitivity",
   "settings.pagesOnly": "These apply when scrolling by pages.",
   "settings.dock": "Dock",
@@ -122,5 +122,6 @@
   "settings.prompt.confused": "Confused face",
   "settings.prompt.custom": "Custom",
   "settings.prompt.customHint": "Type your own placeholder",
-  "search.thinking": "Hmm…"
+  "search.thinking": "Hmm…",
+  "settings.emptyClick.pageHint": "Double-click empty space to close Launchpad."
 }

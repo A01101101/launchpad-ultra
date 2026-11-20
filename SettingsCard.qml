@@ -469,6 +469,14 @@ Rectangle {
           key: "emptyClick"
           options: [card.option("close", "settings.emptyClick.close"), card.option("page", "settings.emptyClick.page")]
         }
+        Label {
+          visible: card.paged && card.store.emptyClick === "page"
+          width: parent.width
+          wrapMode: Text.WordWrap
+          elide: Text.ElideNone
+          opacity: 0.7
+          text: card.catalog.t("settings.emptyClick.pageHint")
+        }
       }
 
       // ---- Search: the bar's look, caret, place and size -------------------
