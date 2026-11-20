@@ -358,14 +358,24 @@ Item {
       }
 
       // A click on empty space closes the launcher, or turns the page toward
-      // the side clicked when the settings say so. A right-click always closes.
+      // the side clicked when the settings say so; then a double-click closes
+      // it instead. A right-click always closes.
       MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
+        // The page before the first click of a double-click turned it.
+        property int pageBeforeClick: -1
+        onDoubleClicked: function(event) {
+          if (event.button !== Qt.LeftButton || root.menuEntry || !(root.paged && settings.emptyClick === "page")) return
+          // Undo the first click's page turn, so a remembered page stays put.
+          if (pageBeforeClick >= 0) root.goToPage(pageBeforeClick)
+          root.dismiss()
+        }
         onClicked: function(event) {
           if (root.menuEntry) {
             root.menuEntry = null
           } else if (root.paged && settings.emptyClick === "page" && event.button === Qt.LeftButton) {
+            pageBeforeClick = root.page
             var forward = root.horizontal ? event.x >= viewport.x + viewport.width / 2
                                           : event.y >= viewport.y + viewport.height / 2
             root.goToPage(root.page + (forward ? 1 : -1) * (root.horizontal ? root.hSign : root.vSign))

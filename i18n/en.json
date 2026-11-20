@@ -49,7 +49,7 @@
   "settings.off": "Off",
   "settings.emptyClick": "Click on empty space",
   "settings.emptyClick.close": "Close",
-  "settings.emptyClick.page": "Turn page",
+  "settings.emptyClick.page": "Turn page (double-click closes)",
   "settings.scrollSensitivity": "Scroll sensitivity",
   "settings.pagesOnly": "These apply when scrolling by pages.",
   "settings.dock": "Dock",

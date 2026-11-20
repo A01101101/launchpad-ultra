@@ -64,7 +64,7 @@ you change things.
 | Next page comes from | Right / Left / Below / Above | Right |
 | Page indicator | Pill / Dots / Numbers / Off | Pill |
 | Page arrows | Round / Plain / Edge / Off | Round |
-| Click on empty space | Close / Turn page | Close |
+| Click on empty space | Close / Turn page (then double-click closes) | Close |
 | Search look | Glass / Plain / Win98 / Hairline (thin outlined pill) / Headline (giant capitals over a rule) / Band (accent-colored, serif type) / Paper (labelled sheet) / Split (fine-bordered square field) | Glass |
 | Looking glass style | Classic / Fine / Bold / Filled / Square / Pixel / Arrow / Dot / Off | Classic |
 | Looking glass size | 60% to 200% | 100% |
