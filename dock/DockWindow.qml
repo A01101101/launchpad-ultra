@@ -332,6 +332,24 @@ PanelWindow {
     property bool pressed: mouse.pressed
     property alias mouse: mouse
 
+    // Held with the left button, any slot takes the dock with it to another
+    // screen edge, the way holding the bar, or a widget on it, moves the bar.
+    property bool moving: false
+
+    function screenPoint(event) {
+      var scene = mouse.mapToItem(window.contentItem, event.x, event.y)
+      var origin = window.origin()
+      return { x: origin.x + scene.x, y: origin.y + scene.y }
+    }
+
+    function startMove(event) {
+      if (moving || !window.dock) return
+      moving = true
+      window.closeMenu()
+      window.dock.beginMove(window.screen)
+      window.dock.updateMove(screenPoint(event))
+    }
+
     width: window.slotSize
     height: window.slotSize
 
@@ -359,25 +377,10 @@ PanelWindow {
       y: window.vertical ? appsSlot.displayedShift : 0
     }
 
-    // Held or dragged with the left button, the apps button takes the dock
-    // with it to another screen edge, the way empty bar space moves the bar.
-    property bool moving: false
+    // Held or dragged with the left button, the apps button moves the dock,
+    // the way empty bar space moves the bar.
     property bool suppressClick: false
     property point pressedAt
-
-    function screenPoint(event) {
-      var scene = appsSlot.mouse.mapToItem(window.contentItem, event.x, event.y)
-      var origin = window.origin()
-      return { x: origin.x + scene.x, y: origin.y + scene.y }
-    }
-
-    function startMove(event) {
-      if (moving || !window.dock) return
-      moving = true
-      window.closeMenu()
-      window.dock.beginMove(window.screen)
-      window.dock.updateMove(screenPoint(event))
-    }
 
     mouse.pressAndHoldInterval: 200
     mouse.cursorShape: moving ? Qt.ClosedHandCursor : Qt.PointingHandCursor
@@ -501,13 +504,28 @@ PanelWindow {
       return appSlot.mapToItem(body, event.x, event.y)
     }
 
+    // Held still, an app moves the whole dock, as a held bar widget moves the
+    // bar; one that starts sliding first is reordered instead.
+    mouse.pressAndHoldInterval: 200
+    mouse.cursorShape: appSlot.moving ? Qt.ClosedHandCursor : Qt.PointingHandCursor
+
     mouse.onPressed: function(event) {
       appSlot.dragged = false
+      appSlot.moving = false
       if (event.button === Qt.LeftButton) appSlot.pressPoint = appSlot.bodyPoint(event)
+    }
+
+    mouse.onPressAndHold: function(event) {
+      if (!(appSlot.mouse.pressedButtons & Qt.LeftButton) || window.dragging || appSlot.dragged) return
+      appSlot.startMove(event)
     }
 
     mouse.onPositionChanged: function(event) {
       if (!(appSlot.mouse.pressedButtons & Qt.LeftButton)) return
+      if (appSlot.moving) {
+        window.dock.updateMove(appSlot.screenPoint(event))
+        return
+      }
       var point = appSlot.bodyPoint(event)
       var delta = window.vertical ? point.y - appSlot.pressPoint.y : point.x - appSlot.pressPoint.x
       // A press that wanders is a drag in the making, not a click.
@@ -527,6 +545,12 @@ PanelWindow {
     }
 
     mouse.onReleased: function(event) {
+      if (appSlot.moving) {
+        appSlot.moving = false
+        appSlot.dragged = true
+        window.dock.finishMove()
+        return
+      }
       if (!appSlot.lifted) return
       window.dropPoint = appSlot.mapToItem(body, event.x, event.y)
       var from = window.dragIndex
@@ -536,7 +560,13 @@ PanelWindow {
       window.dock.moveItem(from, to)
     }
 
-    mouse.onCanceled: if (appSlot.lifted) window.endDrag()
+    mouse.onCanceled: {
+      if (appSlot.moving) {
+        appSlot.moving = false
+        if (window.dock) window.dock.clearMove()
+      }
+      if (appSlot.lifted) window.endDrag()
+    }
 
     mouse.onClicked: function(event) {
       // A drag ends in a release over the app, which is not a click on it.
