@@ -18,6 +18,8 @@ Item {
     showNames: { value: true },
     backdrop: { value: 0.34, min: 0.31, max: 0.9 },
     followTheme: { value: false },
+    // The settings cog in the corner. Off: settings open from the dock's menu.
+    showGear: { value: false },
     rememberPage: { value: false },
     // "pages" turns whole pages; "smooth" is one long grid that scrolls.
     scrollStyle: { value: "pages", options: ["pages", "smooth"] },
@@ -30,8 +32,32 @@ Item {
     scrollSensitivity: { value: 3, min: 1, max: 5 },
     dockIconSize: { value: 36, min: 24, max: 64 },
     // The search bar's size, in percent, and its border in pixels (0 is none).
-    searchSize: { value: 100, min: 60, max: 180 },
+    searchSize: { value: 100, min: 60, max: 240 },
     searchBorder: { value: 1, min: 0, max: 6 },
+    // The whole screen's theme: frosted glass, or a retro green LCD.
+    theme: { value: "glass", options: ["glass", "lcd"] },
+    // The LCD's colors, and how far its icons' shadows fall, in pixels (0 is
+    // no shadow).
+    lcdTint: { value: "green", options: ["green", "amber", "blue", "grey", "violet", "paper", "night"] },
+    lcdShadow: { value: 3, min: 0, max: 12 },
+    // The search bar's look, caret, and underline (for the plain look).
+    // Past the first three: a thin outlined pill, giant capitals over a rule,
+    // a serif band of the accent color, labelled paper, and a field joined
+    // to an accent button.
+    searchLook: { value: "glass", options: ["glass", "plain", "win98", "hairline", "headline", "band", "paper", "split"] },
+    // The looking glass in the search bar: its drawing, color and size in
+    // percent.
+    glassStyle: { value: "classic", options: ["classic", "fine", "bold", "filled", "square", "pixel", "arrow", "dot", "off"] },
+    glassTint: { value: "ink", options: ["ink", "accent", "gold", "red", "green", "blue", "pink"] },
+    glassSize: { value: 100, min: 60, max: 200 },
+    searchUnderline: { value: true },
+    searchCaret: { value: "line", options: ["line", "block", "underscore"] },
+    searchBlink: { value: true },
+    // Where the bar sits: a preset, or "custom" at searchX / searchY (the
+    // bar's centre as a fraction of the screen), set by dragging it.
+    searchPlace: { value: "top", options: ["top", "center", "bottom", "custom"] },
+    searchX: { value: 0.5, min: 0, max: 1 },
+    searchY: { value: 0.06, min: 0, max: 1 },
     // Whether the sort box shows beside the search bar, and the order chosen.
     sortBox: { value: false },
     sortBy: { value: "alpha", options: ["alpha", "used"] }
@@ -46,6 +72,7 @@ Item {
   readonly property bool showNames: values.showNames
   readonly property real backdrop: values.backdrop
   readonly property bool followTheme: values.followTheme
+  readonly property bool showGear: values.showGear
   readonly property bool rememberPage: values.rememberPage
   readonly property string scrollStyle: values.scrollStyle
   readonly property string slideFrom: values.slideFrom
@@ -56,6 +83,33 @@ Item {
   readonly property int dockIconSize: values.dockIconSize
   readonly property int searchSize: values.searchSize
   readonly property int searchBorder: values.searchBorder
+  readonly property string theme: values.theme
+  readonly property string lcdTint: values.lcdTint
+  readonly property int lcdShadow: values.lcdShadow
+  // Each LCD tint: the screen's color and the ink drawn on it.
+  readonly property var lcdTints: ({
+    green: { screen: "#a9bb8f", ink: "#1c2713" },
+    amber: { screen: "#e3b04b", ink: "#2e1c05" },
+    blue: { screen: "#a3c6d9", ink: "#10232f" },
+    grey: { screen: "#c6cabd", ink: "#1f221c" },
+    violet: { screen: "#bcaedb", ink: "#201733" },
+    paper: { screen: "#e8e6dc", ink: "#1b1b19" },
+    night: { screen: "#111a0d", ink: "#9ed46c" }
+  })
+  readonly property color lcdScreen: lcdTints[lcdTint].screen
+  readonly property color lcdInk: lcdTints[lcdTint].ink
+  readonly property string searchLook: values.searchLook
+  readonly property string glassStyle: values.glassStyle
+  readonly property string glassTint: values.glassTint
+  readonly property int glassSize: values.glassSize
+  // The looking glass's fixed colors. "ink" and "accent" follow the screen.
+  readonly property var tints: ({ gold: "#f5c542", red: "#ff5a5f", green: "#4cd964", blue: "#4aa8ff", pink: "#ff6ec7" })
+  readonly property bool searchUnderline: values.searchUnderline
+  readonly property string searchCaret: values.searchCaret
+  readonly property bool searchBlink: values.searchBlink
+  readonly property string searchPlace: values.searchPlace
+  readonly property real searchX: values.searchX
+  readonly property real searchY: values.searchY
   readonly property bool sortBox: values.sortBox
   readonly property string sortBy: values.sortBy
 

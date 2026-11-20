@@ -1,31 +1,44 @@
 // The settings card shown beside the grid, which redraws as each setting
-// changes, so the grid itself is the preview. Launchpad's own settings come
-// first, then the dock's.
+// changes, so the grid itself is the preview. It wears the same glass (or LCD)
+// as Launchpad and keeps one size on every tab.
 import QtQuick
 import qs.Commons
 import qs.Commons as Commons
 import qs.Ui
 
-BorderSurface {
+Rectangle {
   id: card
 
   required property var store
   required property var catalog
-  // The dock this plugin provides, or null when it is not running.
-  property var dock: null
-  // The most height the card may take; past it the settings scroll.
+  // The look of Launchpad itself, so the card is part of the same screen.
+  property color ink: "white"
+  property color shade: "black"
+  property bool lcd: false
+  // The most height the card may take.
   property real maxHeight: 600
   signal closeRequested()
 
-  readonly property color ink: Commons.Color.popups.text
   readonly property bool paged: store.scrollStyle === "pages"
+  // A looking-glass color by name; "ink" and "accent" follow the screen.
+  function tintColor(name) {
+    return name === "ink" ? card.ink : name === "accent" ? Commons.Color.accent : store.tints[name]
+  }
+  readonly property color glassInk: lcd ? ink : tintColor(store.glassTint)
 
-  width: Style.space(400)
-  height: Math.min(maxHeight, content.implicitHeight + contentTopInset + contentBottomInset)
-  radius: Style.cornerRadius
-  color: Commons.Color.popups.background
-  borderSpec: Border.surfaceSpec("popups", "border", Commons.Color.popups.border, Style.normalBorderWidth)
-  padding: Style.spacing.panelPadding
+  // The card keeps one size on every tab; only the settings inside scroll.
+  readonly property real inset: Style.space(20)
+  width: Style.space(380)
+  height: Math.min(maxHeight, Style.space(580))
+  radius: lcd ? 3 : Style.cornerRadius * 1.5
+  color: Util.alpha(shade, lcd ? 1 : 0.82)
+  border.width: lcd ? 2 : 1
+  border.color: Util.alpha(ink, lcd ? 0.85 : 0.22)
+
+  // The tab showing.
+  property string tab: "grid"
+  readonly property var tabs: [option("grid", "settings.tab.grid"), option("pages", "settings.pages"),
+                               option("search", "settings.tab.search"), option("theme", "settings.tab.theme")]
 
   function option(value, key) {
     return { value: value, label: card.catalog.t(key) }
@@ -40,6 +53,49 @@ BorderSurface {
     font.family: Style.font.family
     font.pixelSize: Style.font.body
     elide: Text.ElideRight
+  }
+
+  // A wrapping row of pick-one chips. The chosen chip is tinted with the
+  // accent on glass and inverted on the LCD, so it reads on either screen.
+  component Chips: Flow {
+    id: chips
+    property var options: []
+    property string value: ""
+    signal changed(string value)
+
+    spacing: Style.spacing.sm
+
+    Repeater {
+      model: chips.options
+      delegate: Rectangle {
+        id: chip
+        required property var modelData
+        readonly property bool chosen: chips.value === modelData.value
+        readonly property color tint: card.lcd ? card.ink : Commons.Color.accent
+        width: chipLabel.implicitWidth + 2 * Style.spacing.controlPaddingX
+        height: chipLabel.implicitHeight + 2 * Style.spacing.controlPaddingY
+        radius: card.lcd ? 2 : Style.cornerRadius
+        color: chosen ? (card.lcd ? card.ink : Util.alpha(tint, 0.22))
+               : chipHit.containsMouse ? Util.alpha(card.ink, 0.12) : Util.alpha(card.shade, card.lcd ? 0 : 0.5)
+        border.width: 1
+        border.color: chosen ? tint : Util.alpha(card.ink, card.lcd ? 0.7 : 0.3)
+        Label {
+          id: chipLabel
+          anchors.centerIn: parent
+          elide: Text.ElideNone
+          text: chip.modelData.label
+          color: chip.chosen ? (card.lcd ? card.shade : chip.tint) : card.ink
+          font.bold: chip.chosen
+        }
+        MouseArea {
+          id: chipHit
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: chips.changed(chip.modelData.value)
+        }
+      }
+    }
   }
 
   // A named slider with its current value at the end of the title line.
@@ -78,7 +134,7 @@ BorderSurface {
       integer: sliderRow.integer
       value: card.store.values[sliderRow.key]
       trackColor: Util.alpha(card.ink, 0.2)
-      fillColor: Commons.Color.accent
+      fillColor: card.lcd ? card.ink : Commons.Color.accent
       knobColor: card.ink
       onMoved: function(value) { card.store.preview(sliderRow.key, value) }
       onReleased: function(value) { card.store.set(sliderRow.key, value) }
@@ -106,6 +162,8 @@ BorderSurface {
       anchors.right: parent.right
       anchors.verticalCenter: parent.verticalCenter
       interactive: false
+      foreground: card.ink
+      accent: card.lcd ? card.ink : Commons.Color.accent
       checked: switchRow.checked
     }
     MouseArea {
@@ -138,12 +196,10 @@ BorderSurface {
     enabled: available
 
     Label { text: choiceRow.label; width: parent.width }
-    ButtonGroup {
+    Chips {
+      width: parent.width
       options: choiceRow.options
       value: choiceRow.value
-      foreground: card.ink
-      background: Commons.Color.popups.background
-      focusable: false
       onChanged: function(value) { choiceRow.picked(value) }
     }
   }
@@ -155,161 +211,390 @@ BorderSurface {
     onPicked: function(value) { card.store.set(key, value) }
   }
 
+  // A pick-one setting with more choices than fit on one line: named chips
+  // that wrap.
+  component ChipChoice: Column {
+    id: chipChoice
+    property string label: ""
+    property string key: ""
+    property var options: []
+
+    width: parent.width
+    spacing: Style.spacing.sm
+
+    Label { text: chipChoice.label; width: parent.width }
+    Chips {
+      width: parent.width
+      options: chipChoice.options
+      value: card.store.values[chipChoice.key]
+      onChanged: function(value) { card.store.set(chipChoice.key, value) }
+    }
+  }
+
+  // A square tile in a row of picks: the chosen one wears a ring.
+  component Tile: Rectangle {
+    id: tile
+    property bool chosen: false
+    signal picked()
+    width: Style.space(40)
+    height: width
+    radius: Style.cornerRadius
+    color: Util.alpha(card.ink, chosen ? 0.18 : tileHit.containsMouse ? 0.1 : 0.04)
+    border.width: chosen ? 2 : 1
+    border.color: chosen ? (card.lcd ? card.ink : Commons.Color.accent) : Util.alpha(card.ink, 0.22)
+    MouseArea {
+      id: tileHit
+      anchors.fill: parent
+      hoverEnabled: true
+      cursorShape: Qt.PointingHandCursor
+      onClicked: tile.picked()
+    }
+  }
+
+  // ---- Pinned: title and tabs --------------------------------------------
+  Column {
+    id: pinned
+    x: card.inset
+    y: card.inset
+    width: card.width - 2 * card.inset
+    spacing: Style.spacing.lg
+
+    Item {
+      width: parent.width
+      height: Math.max(heading.implicitHeight, closeButton.implicitHeight)
+      Label {
+        id: heading
+        anchors.verticalCenter: parent.verticalCenter
+        width: parent.width - closeButton.width - Style.spacing.lg
+        text: card.catalog.t("settings.title")
+        font.pixelSize: Style.font.heading
+      }
+      Button {
+        id: closeButton
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        text: "✕"
+        foreground: card.ink
+        onClicked: card.closeRequested()
+      }
+    }
+
+    Chips {
+      width: parent.width
+      options: card.tabs
+      value: card.tab
+      onChanged: function(value) { card.tab = value }
+    }
+  }
+
+  // ---- Pinned: reset ------------------------------------------------------
+  Button {
+    id: resetButton
+    anchors.left: parent.left
+    anchors.leftMargin: card.inset
+    anchors.bottom: parent.bottom
+    anchors.bottomMargin: card.inset
+    text: card.catalog.t("settings.reset")
+    bordered: true
+    foreground: card.ink
+    opacity: card.store.isDefault ? 0.5 : 1
+    onClicked: card.store.reset()
+  }
+
+  // ---- The tab's settings, the only part that scrolls --------------------
   Flickable {
     id: scroller
-    x: card.contentLeftInset
-    y: card.contentTopInset
-    width: card.width - card.contentLeftInset - card.contentRightInset
-    height: card.height - card.contentTopInset - card.contentBottomInset
+    x: card.inset
+    anchors.top: pinned.bottom
+    anchors.topMargin: Style.spacing.xl
+    anchors.bottom: resetButton.top
+    anchors.bottomMargin: Style.spacing.lg
+    width: card.width - 2 * card.inset
     contentWidth: width
     contentHeight: content.implicitHeight
     boundsBehavior: Flickable.StopAtBounds
     clip: true
+    // Each tab starts at its top.
+    Connections { target: card; function onTabChanged() { scroller.contentY = 0 } }
 
     Column {
       id: content
       width: scroller.width
       spacing: Style.spacing.xxl
 
-      Item {
+      // ---- Grid: what is shown and in what order -------------------------
+      Column {
+        visible: card.tab === "grid"
         width: parent.width
-        height: Math.max(heading.implicitHeight, closeButton.implicitHeight)
+        spacing: Style.spacing.xxl
+
+        PanelSectionHeader { text: card.catalog.t("settings.layout"); foreground: card.ink }
+        SliderRow { label: card.catalog.t("settings.columns"); key: "columns"; minimum: 4; maximum: 10 }
+        SliderRow { label: card.catalog.t("settings.rows"); key: "rows"; minimum: 2; maximum: 6 }
+        SliderRow { label: card.catalog.t("settings.iconSize"); key: "iconSize"; minimum: 56; maximum: 128; step: 2 }
+        SettingSwitch { label: card.catalog.t("settings.showNames"); key: "showNames" }
+
+        PanelSectionHeader { text: card.catalog.t("settings.behaviour"); foreground: card.ink }
+        SettingChoice {
+          label: card.catalog.t("settings.sortBy")
+          key: "sortBy"
+          options: [card.option("alpha", "sort.alpha"), card.option("used", "sort.used")]
+        }
+        SettingSwitch { label: card.catalog.t("settings.sortBox"); key: "sortBox" }
+        SettingSwitch { label: card.catalog.t("settings.rememberPage"); key: "rememberPage" }
+      }
+
+      // ---- Pages: how the grid moves ---------------------------------------
+      Column {
+        visible: card.tab === "pages"
+        width: parent.width
+        spacing: Style.spacing.xxl
+
+        SettingChoice {
+          label: card.catalog.t("settings.scrollStyle")
+          key: "scrollStyle"
+          options: [card.option("pages", "settings.scrollStyle.pages"), card.option("smooth", "settings.scrollStyle.smooth")]
+        }
+        SliderRow { label: card.catalog.t("settings.scrollSensitivity"); key: "scrollSensitivity"; minimum: 1; maximum: 5 }
+        // Smooth scrolling has no pages, so their settings step out of the way.
         Label {
-          id: heading
-          anchors.verticalCenter: parent.verticalCenter
-          width: parent.width - closeButton.width - Style.spacing.lg
-          text: card.catalog.t("settings.title")
-          font.pixelSize: Style.font.heading
+          visible: !card.paged
+          width: parent.width
+          wrapMode: Text.WordWrap
+          elide: Text.ElideNone
+          opacity: 0.7
+          text: card.catalog.t("settings.pagesOnly")
         }
-        Button {
-          id: closeButton
-          anchors.right: parent.right
-          anchors.verticalCenter: parent.verticalCenter
-          text: "✕"
-          foreground: card.ink
-          onClicked: card.closeRequested()
+        SettingChoice {
+          visible: card.paged
+          label: card.catalog.t("settings.slideFrom")
+          key: "slideFrom"
+          options: [card.option("right", "settings.side.right"), card.option("left", "settings.side.left"),
+                    card.option("bottom", "settings.side.bottom"), card.option("top", "settings.side.top")]
+        }
+        SettingChoice {
+          visible: card.paged
+          label: card.catalog.t("settings.indicator")
+          key: "indicator"
+          options: [card.option("pill", "settings.indicator.pill"), card.option("dots", "settings.indicator.dots"),
+                    card.option("numbers", "settings.indicator.numbers"), card.option("off", "settings.off")]
+        }
+        SettingChoice {
+          visible: card.paged
+          label: card.catalog.t("settings.arrows")
+          key: "arrows"
+          options: [card.option("round", "settings.arrows.round"), card.option("chevron", "settings.arrows.chevron"),
+                    card.option("edge", "settings.arrows.edge"), card.option("off", "settings.off")]
+        }
+        SettingChoice {
+          visible: card.paged
+          label: card.catalog.t("settings.emptyClick")
+          key: "emptyClick"
+          options: [card.option("close", "settings.emptyClick.close"), card.option("page", "settings.emptyClick.page")]
         }
       }
 
-      PanelSectionHeader { text: card.catalog.t("settings.layout"); foreground: card.ink }
-      SliderRow { label: card.catalog.t("settings.columns"); key: "columns"; minimum: 4; maximum: 10 }
-      SliderRow { label: card.catalog.t("settings.rows"); key: "rows"; minimum: 2; maximum: 6 }
-      SliderRow { label: card.catalog.t("settings.iconSize"); key: "iconSize"; minimum: 56; maximum: 128; step: 2 }
-      SettingSwitch { label: card.catalog.t("settings.showNames"); key: "showNames" }
-
-      PanelSectionHeader { text: card.catalog.t("settings.search"); foreground: card.ink }
-      SliderRow {
-        label: card.catalog.t("settings.searchSize")
-        key: "searchSize"
-        minimum: 60
-        maximum: 180
-        step: 5
-        format: function(value) { return card.catalog.t("settings.percent").arg(Commons.I18n.formatNumber(value, 0)) }
-      }
-      SliderRow {
-        label: card.catalog.t("settings.searchBorder")
-        key: "searchBorder"
-        minimum: 0
-        maximum: 6
-        format: function(value) { return value < 1 ? card.catalog.t("settings.none") : Commons.I18n.formatNumber(value, 0) }
-      }
-      SettingSwitch { label: card.catalog.t("settings.sortBox"); key: "sortBox" }
-      SettingChoice {
-        label: card.catalog.t("settings.sortBy")
-        key: "sortBy"
-        options: [card.option("alpha", "sort.alpha"), card.option("used", "sort.used")]
-      }
-
-      PanelSectionHeader { text: card.catalog.t("settings.pages"); foreground: card.ink }
-      SettingChoice {
-        label: card.catalog.t("settings.scrollStyle")
-        key: "scrollStyle"
-        options: [card.option("pages", "settings.scrollStyle.pages"), card.option("smooth", "settings.scrollStyle.smooth")]
-      }
-      SliderRow { label: card.catalog.t("settings.scrollSensitivity"); key: "scrollSensitivity"; minimum: 1; maximum: 5 }
-      Label {
-        visible: !card.paged
+      // ---- Search: the bar's look, caret, place and size -------------------
+      Column {
+        visible: card.tab === "search"
         width: parent.width
-        wrapMode: Text.WordWrap
-        elide: Text.ElideNone
-        opacity: 0.7
-        text: card.catalog.t("settings.pagesOnly")
-      }
-      SettingChoice {
-        label: card.catalog.t("settings.slideFrom")
-        key: "slideFrom"
-        available: card.paged
-        options: [card.option("right", "settings.side.right"), card.option("left", "settings.side.left"),
-                  card.option("bottom", "settings.side.bottom"), card.option("top", "settings.side.top")]
-      }
-      SettingChoice {
-        label: card.catalog.t("settings.indicator")
-        key: "indicator"
-        available: card.paged
-        options: [card.option("pill", "settings.indicator.pill"), card.option("dots", "settings.indicator.dots"),
-                  card.option("numbers", "settings.indicator.numbers"), card.option("off", "settings.off")]
-      }
-      SettingChoice {
-        label: card.catalog.t("settings.arrows")
-        key: "arrows"
-        available: card.paged
-        options: [card.option("round", "settings.arrows.round"), card.option("chevron", "settings.arrows.chevron"),
-                  card.option("edge", "settings.arrows.edge"), card.option("off", "settings.off")]
-      }
-      SettingChoice {
-        label: card.catalog.t("settings.emptyClick")
-        key: "emptyClick"
-        available: card.paged
-        options: [card.option("close", "settings.emptyClick.close"), card.option("page", "settings.emptyClick.page")]
+        spacing: Style.spacing.xxl
+
+        Label {
+          width: parent.width
+          wrapMode: Text.WordWrap
+          elide: Text.ElideNone
+          opacity: 0.7
+          text: card.catalog.t("settings.searchHint")
+        }
+        ChipChoice {
+          visible: !card.lcd
+          label: card.catalog.t("settings.searchLook")
+          key: "searchLook"
+          options: [card.option("glass", "settings.searchLook.glass"), card.option("plain", "settings.searchLook.plain"),
+                    card.option("win98", "settings.searchLook.win98"), card.option("hairline", "settings.searchLook.hairline"),
+                    card.option("headline", "settings.searchLook.headline"), card.option("band", "settings.searchLook.band"),
+                    card.option("paper", "settings.searchLook.paper"), card.option("split", "settings.searchLook.split")]
+        }
+        Label {
+          visible: card.lcd
+          width: parent.width
+          wrapMode: Text.WordWrap
+          elide: Text.ElideNone
+          opacity: 0.7
+          text: card.catalog.t("settings.searchLcd")
+        }
+        SettingSwitch {
+          visible: !card.lcd && card.store.searchLook === "plain"
+          label: card.catalog.t("settings.searchUnderline")
+          key: "searchUnderline"
+        }
+        SettingChoice {
+          label: card.catalog.t("settings.searchCaret")
+          key: "searchCaret"
+          options: [card.option("line", "settings.caret.line"), card.option("block", "settings.caret.block"),
+                    card.option("underscore", "settings.caret.underscore")]
+        }
+        SettingSwitch { label: card.catalog.t("settings.searchBlink"); key: "searchBlink" }
+        SettingChoice {
+          label: card.catalog.t("settings.searchPlace")
+          key: "searchPlace"
+          options: [card.option("top", "settings.place.top"), card.option("center", "settings.place.center"),
+                    card.option("bottom", "settings.place.bottom"), card.option("custom", "settings.place.custom")]
+        }
+        SliderRow {
+          label: card.catalog.t("settings.searchSize")
+          key: "searchSize"
+          minimum: 60
+          maximum: 240
+          step: 5
+          format: function(value) { return card.catalog.t("settings.percent").arg(Commons.I18n.formatNumber(value, 0)) }
+        }
+        SliderRow {
+          visible: card.lcd || ["glass", "hairline", "split"].indexOf(card.store.searchLook) !== -1
+          label: card.catalog.t("settings.searchBorder")
+          key: "searchBorder"
+          minimum: 0
+          maximum: 6
+          format: function(value) { return value < 1 ? card.catalog.t("settings.none") : Commons.I18n.formatNumber(value, 0) }
+        }
+
+        // The looking glass: each tile shows the drawing it picks.
+        PanelSectionHeader { text: card.catalog.t("settings.glass"); foreground: card.ink }
+        Column {
+          width: parent.width
+          spacing: Style.spacing.sm
+          Label { text: card.catalog.t("settings.glassStyle"); width: parent.width }
+          Flow {
+            width: parent.width
+            spacing: Style.spacing.sm
+            Repeater {
+              model: card.store.spec.glassStyle.options
+              delegate: Tile {
+                id: styleTile
+                required property string modelData
+                chosen: card.store.glassStyle === modelData
+                onPicked: card.store.set("glassStyle", modelData)
+                Magnifier {
+                  visible: styleTile.modelData !== "off"
+                  anchors.centerIn: parent
+                  scale: 1.25
+                  style: styleTile.modelData
+                  color: card.glassInk
+                }
+                Label {
+                  visible: styleTile.modelData === "off"
+                  anchors.centerIn: parent
+                  opacity: 0.7
+                  font.pixelSize: Style.font.caption
+                  text: card.catalog.t("settings.off")
+                }
+              }
+            }
+          }
+        }
+        Column {
+          visible: !card.lcd
+          width: parent.width
+          spacing: Style.spacing.sm
+          opacity: card.store.glassStyle === "off" ? 0.4 : 1
+          Label { text: card.catalog.t("settings.glassTint"); width: parent.width }
+          Flow {
+            width: parent.width
+            spacing: Style.spacing.sm
+            Repeater {
+              model: card.store.spec.glassTint.options
+              delegate: Tile {
+                id: tintTile
+                required property string modelData
+                chosen: card.store.glassTint === modelData
+                onPicked: card.store.set("glassTint", modelData)
+                Rectangle {
+                  anchors.centerIn: parent
+                  width: Style.space(20)
+                  height: width
+                  radius: width / 2
+                  color: card.tintColor(tintTile.modelData)
+                }
+              }
+            }
+          }
+        }
+        SliderRow {
+          label: card.catalog.t("settings.glassSize")
+          key: "glassSize"
+          minimum: 60
+          maximum: 200
+          step: 5
+          format: function(value) { return card.catalog.t("settings.percent").arg(Commons.I18n.formatNumber(value, 0)) }
+        }
       }
 
-      PanelSectionHeader { text: card.catalog.t("settings.appearance"); foreground: card.ink }
-      SliderRow {
-        label: card.catalog.t("settings.backdrop")
-        key: "backdrop"
-        minimum: 0.31
-        maximum: 0.9
-        step: 0.01
-        integer: false
-        format: function(value) { return card.catalog.t("settings.percent").arg(Commons.I18n.formatNumber(Math.round(value * 100), 0)) }
-      }
-      SettingSwitch { label: card.catalog.t("settings.followTheme"); key: "followTheme" }
+      // ---- Theme: the whole screen ----------------------------------------
+      Column {
+        visible: card.tab === "theme"
+        width: parent.width
+        spacing: Style.spacing.xxl
 
-      PanelSectionHeader { text: card.catalog.t("settings.behaviour"); foreground: card.ink }
-      SettingSwitch { label: card.catalog.t("settings.rememberPage"); key: "rememberPage" }
-
-      // The dock's position and auto-hide are Omarchy's own dock settings,
-      // the ones `omarchy dock` changes.
-      PanelSectionHeader { visible: !!card.dock; text: card.catalog.t("settings.dock"); foreground: card.ink }
-      ChoiceRow {
-        visible: !!card.dock
-        label: card.catalog.t("settings.dockPosition")
-        value: card.dock ? card.dock.position : ""
-        options: [card.option("top", "dock.positionTop"), card.option("bottom", "dock.positionBottom"),
-                  card.option("left", "dock.positionLeft"), card.option("right", "dock.positionRight")]
-        onPicked: function(value) { card.dock.setPosition(value) }
-      }
-      SwitchRow {
-        visible: !!card.dock
-        label: card.catalog.t("dock.autoHide")
-        checked: !!card.dock && card.dock.autohide
-        onToggled: function(on) { card.dock.setAutohide(on) }
-      }
-      SliderRow {
-        visible: !!card.dock
-        label: card.catalog.t("settings.dockIconSize")
-        key: "dockIconSize"
-        minimum: 24
-        maximum: 64
-        step: 2
-      }
-
-      Button {
-        text: card.catalog.t("settings.reset")
-        bordered: true
-        foreground: card.ink
-        opacity: card.store.isDefault ? 0.5 : 1
-        onClicked: card.store.reset()
+        SettingChoice {
+          label: card.catalog.t("settings.theme")
+          key: "theme"
+          options: [card.option("glass", "settings.theme.glass"), card.option("lcd", "settings.theme.lcd")]
+        }
+        // The LCD's tint: each tile is that screen with a dot of its ink.
+        Column {
+          visible: card.lcd
+          width: parent.width
+          spacing: Style.spacing.sm
+          Label { text: card.catalog.t("settings.lcdTint"); width: parent.width }
+          Flow {
+            width: parent.width
+            spacing: Style.spacing.sm
+            Repeater {
+              model: card.store.spec.lcdTint.options
+              delegate: Tile {
+                id: lcdTile
+                required property string modelData
+                chosen: card.store.lcdTint === modelData
+                onPicked: card.store.set("lcdTint", modelData)
+                Rectangle {
+                  anchors.fill: parent
+                  anchors.margins: Style.space(5)
+                  radius: 2
+                  color: card.store.lcdTints[lcdTile.modelData].screen
+                  border.width: 1
+                  border.color: card.store.lcdTints[lcdTile.modelData].ink
+                  Rectangle {
+                    anchors.centerIn: parent
+                    width: Style.space(10)
+                    height: width
+                    color: card.store.lcdTints[lcdTile.modelData].ink
+                  }
+                }
+              }
+            }
+          }
+        }
+        SliderRow {
+          visible: card.lcd
+          label: card.catalog.t("settings.lcdShadow")
+          key: "lcdShadow"
+          minimum: 0
+          maximum: 12
+          format: function(value) { return value < 1 ? card.catalog.t("settings.none") : Commons.I18n.formatNumber(value, 0) }
+        }
+        SettingSwitch { visible: !card.lcd; label: card.catalog.t("settings.followTheme"); key: "followTheme" }
+        SliderRow {
+          visible: !card.lcd
+          label: card.catalog.t("settings.backdrop")
+          key: "backdrop"
+          minimum: 0.31
+          maximum: 0.9
+          step: 0.01
+          integer: false
+          format: function(value) { return card.catalog.t("settings.percent").arg(Commons.I18n.formatNumber(Math.round(value * 100), 0)) }
+        }
+        SettingSwitch { label: card.catalog.t("settings.showGear"); key: "showGear" }
       }
     }
   }

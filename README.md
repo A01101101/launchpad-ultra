@@ -1,4 +1,4 @@
-# Launchpad for Omarchy
+# Launchpad Ultra for Omarchy
 
 A fullscreen app grid for the [Omarchy](https://omarchy.org) shell: every
 installed app on sliding pages of six columns by four rows, over a frosted view
@@ -18,7 +18,7 @@ working as before.
 ## Install
 
 ```bash
-omarchy plugin add <git-url-of-this-repo> --enable
+omarchy plugin add https://github.com/A01101101/launchpad-ultra.git --enable
 ```
 
 ## Open it
@@ -39,8 +39,9 @@ Or click the apps button on the dock (the dock shows on floating workspaces).
 
 ## Settings
 
-Right-click the dock's apps button and pick **Launchpad settings**, or click
-the gear in the top corner of Launchpad. The grid behind the card redraws as
+Right-click the dock's apps button and pick **Launchpad settings**, or
+right-click the search bar. Four tabs: Grid, Pages, Search, Theme. While the
+card is open, drag the search bar to move it and drag its corner to resize it. The grid behind the card redraws as
 you change things.
 
 | Setting | Range | Default |
@@ -49,8 +50,12 @@ you change things.
 | Rows | 2 to 6 | 4 |
 | Icon size | 56 to 128 | 86 |
 | Show app names | on / off | on |
+| Screen | Glass / LCD (the whole screen turns green, with pixel icons) | Glass |
+| LCD tint | Green / Amber / Blue / Grey / Violet / Paper / Night (dark screen, light ink) | Green |
+| LCD shadow depth | None to 12 | 3 |
 | Backdrop darkness | 31% to 90% | 34% |
 | Use theme colors | on / off | off (dark glass, white text) |
+| Settings button | on / off (the corner cog; off, open settings from the dock menu or by right-clicking the search bar) | off |
 | Reopen on the last page | on / off | off |
 | Scrolling | Pages / Smooth (one long grid that scrolls) | Pages |
 | Scroll sensitivity | 1 to 5 | 3 |
@@ -58,13 +63,19 @@ you change things.
 | Page indicator | Pill / Dots / Numbers / Off | Pill |
 | Page arrows | Round / Plain / Edge / Off | Round |
 | Click on empty space | Close / Turn page | Close |
-| Search bar size | 60% to 180% | 100% |
-| Search bar border | None to 6 | 1 |
+| Search look | Glass / Plain / Win98 / Hairline (thin outlined pill) / Headline (giant capitals over a rule) / Band (accent-colored, serif type) / Paper (labelled sheet) / Split (field joined to an accent button) | Glass |
+| Looking glass style | Classic / Fine / Bold / Filled / Square / Pixel / Arrow / Dot / Off | Classic |
+| Looking glass color | Text color / Accent / Gold / Red / Green / Blue / Pink | Text color |
+| Looking glass size | 60% to 200% | 100% |
+| Search underline | on / off (Plain look) | on |
+| Search cursor | Line / Block / Underscore | Line |
+| Blinking cursor | on / off | on |
+| Search position | Top / Middle / Bottom / Custom | Top |
+| Search bar size | 60% to 240% | 100% |
+| Search bar border | None to 6 (Glass, Hairline, Split and LCD) | 1 |
 | Show sort box | on / off | off |
 | Sort apps by | A–Z / Most used | A–Z |
-| Dock position | Top / Bottom / Left / Right | Omarchy's |
-| Dock auto-hide | on / off | Omarchy's |
-| Dock icon size | 24 to 64 | 36 |
+| Dock icon size | 24 to 64 (in `launchpad.json` only) | 36 |
 
 The sort box sits beside the search bar. "Most used" counts how often each app
 is opened from Launchpad or its dock, kept in
@@ -73,8 +84,8 @@ not counted. A search always shows the best matches first.
 
 The direction, indicator, arrow and empty-click settings apply when scrolling
 by pages and are greyed out in smooth mode. With "Turn page", a right-click on
-empty space still closes Launchpad. Dock position and auto-hide are Omarchy's
-own dock settings, the same ones `omarchy dock` changes.
+empty space still closes Launchpad. The dock's position and auto-hide are Omarchy's own, changed with
+`omarchy dock`.
 
 They are saved in `~/.config/omarchy/launchpad.json`, which you can also edit
 by hand, and scripts can change them while the shell runs:
@@ -82,6 +93,7 @@ by hand, and scripts can change them while the shell runs:
 ```bash
 omarchy-shell shell call launchpad configure '{"columns": 8, "rows": 3}'
 omarchy-shell shell summon launchpad '{"view": "settings"}'
+omarchy-shell shell summon launchpad '{"view": "settings", "tab": "search"}'
 ```
 
 ## Blur the desktop behind it
@@ -133,3 +145,7 @@ English.
   would both show.
 - While developing: the shell keeps this plugin loaded between opens, so after
   editing run `omarchy restart shell` if a change does not show up.
+
+## License
+
+MIT. The dock in `dock/` is adapted from Omarchy's dock, © David Heinemeier Hansson, MIT; see `dock/LICENSE`.

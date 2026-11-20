@@ -75,8 +75,10 @@ Item {
 
   // Colors: a dark glass with white ink by default, or the theme's own
   // background and text when "follow theme" is on.
-  readonly property color ink: settings.followTheme ? Commons.Color.foreground : "white"
-  readonly property color shade: settings.followTheme ? Commons.Color.background : Qt.rgba(12 / 255, 14 / 255, 22 / 255, 1)
+  // The LCD theme swaps both for a green screen with dark ink.
+  readonly property bool lcd: settings.theme === "lcd"
+  readonly property color ink: lcd ? settings.lcdInk : (settings.followTheme ? Commons.Color.foreground : "white")
+  readonly property color shade: lcd ? settings.lcdScreen : (settings.followTheme ? Commons.Color.background : Qt.rgba(12 / 255, 14 / 255, 22 / 255, 1))
   function inkAlpha(opacity) { return Util.alpha(root.ink, opacity) }
 
   onQueryChanged: {
@@ -107,6 +109,8 @@ Item {
     selectedIndex = 0
     cursorActive = false
     settingsOpen = payload.view === "settings"
+    // { "view": "settings", "tab": "search" } opens the card on that tab.
+    if (settingsOpen && ["grid", "pages", "search", "theme"].indexOf(payload.tab) !== -1) settingsCard.tab = payload.tab
     if (appLibrary) appLibrary.refreshIcons()
     rebuild()
     goToPage(startPage)
@@ -268,6 +272,29 @@ Item {
   readonly property real searchScale: settings.searchSize / 100
   Commons.Translations { id: strings; directory: Qt.resolvedUrl("i18n") }
 
+  // A click on any other screen closes Launchpad too: while it is open, each
+  // of the other screens wears an invisible sheet that takes the click.
+  Variants {
+    model: Quickshell.screens
+    PanelWindow {
+      id: catcher
+      required property var modelData
+      screen: modelData
+      visible: root.opened && !!panel.targetScreen && modelData.name !== panel.targetScreen.name
+      color: "transparent"
+      anchors { top: true; bottom: true; left: true; right: true }
+      exclusionMode: ExclusionMode.Ignore
+      WlrLayershell.layer: WlrLayer.Overlay
+      WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+      WlrLayershell.namespace: "launchpad-outside"
+      MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.AllButtons
+        onPressed: root.dismiss()
+      }
+    }
+  }
+
   OverlayWindow {
     id: panel
     shown: root.opened
@@ -291,8 +318,43 @@ Item {
       // ---- Backdrop: a tint over the desktop ---------------------------------
       // The tint stays above 0.3 so a blur rule with ignore_alpha = 0.3 applies.
       Rectangle {
+        id: backdrop
         anchors.fill: parent
-        color: Util.alpha(root.shade, settings.backdrop)
+        // Lighter through the middle, deeper toward the top and bottom, so the
+        // grid sits in a pool of light and the edges recede. The LCD is a
+        // nearly solid screen.
+        readonly property real mid: root.lcd ? 1 : settings.backdrop
+        readonly property real edge: root.lcd ? 1 : Math.min(0.96, settings.backdrop + 0.16)
+        gradient: Gradient {
+          GradientStop { position: 0.0; color: Util.alpha(root.shade, backdrop.edge) }
+          GradientStop { position: 0.28; color: Util.alpha(root.shade, backdrop.mid) }
+          GradientStop { position: 0.72; color: Util.alpha(root.shade, backdrop.mid) }
+          GradientStop { position: 1.0; color: Util.alpha(root.shade, backdrop.edge) }
+        }
+      }
+
+      // The LCD's pixel grid: a faint dark line between every four-pixel dot,
+      // tiled over the whole screen.
+      Image {
+        anchors.fill: parent
+        visible: root.lcd
+        fillMode: Image.Tile
+        smooth: false
+        sourceSize: Qt.size(4, 4)
+        source: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4'>"
+                + "<path d='M0 0h4v1h-4zM0 1h1v3h-1z' fill='%23" + settings.lcdTints[settings.lcdTint].ink.slice(1)
+                + "' fill-opacity='0.11'/></svg>"
+      }
+      // The glass over it: darker into the corners, the way a lit LCD falls off.
+      Rectangle {
+        anchors.fill: parent
+        visible: root.lcd
+        gradient: Gradient {
+          GradientStop { position: 0.0; color: Util.alpha(root.ink, 0.16) }
+          GradientStop { position: 0.12; color: Util.alpha(root.ink, 0.0) }
+          GradientStop { position: 0.88; color: Util.alpha(root.ink, 0.0) }
+          GradientStop { position: 1.0; color: Util.alpha(root.ink, 0.2) }
+        }
       }
 
       // A click on empty space closes the launcher, or turns the page toward
@@ -339,18 +401,173 @@ Item {
       Timer { id: wheelPause; interval: 320 }
 
       // ---- Search pill -------------------------------------------------------
+      // Its look, caret, size and place all come from the settings. While the
+      // settings card is open it can be dragged to move and resized by its corner.
       Rectangle {
         id: searchPill
         readonly property bool filled: searchInput.text !== ""
-        anchors.top: parent.top
-        anchors.topMargin: Style.space(36)
-        anchors.horizontalCenter: viewport.horizontalCenter
-        width: Math.round(Style.space(filled ? 440 : 340) * root.searchScale)
-        height: Math.round(Style.space(38) * root.searchScale)
-        radius: height / 2
-        color: root.inkAlpha(filled ? 0.26 : 0.16)
-        border.width: settings.searchBorder
-        border.color: root.inkAlpha(filled ? 0.45 : 0.22)
+        readonly property string look: root.lcd ? "lcd" : settings.searchLook
+        readonly property bool lcd: look === "lcd"
+        readonly property bool win98: look === "win98"
+        readonly property bool plain: look === "plain"
+        // A thin outlined pill with a light italic prompt.
+        readonly property bool hairline: look === "hairline"
+        // Giant bold capitals set straight on the screen, over a thin rule.
+        readonly property bool headline: look === "headline"
+        // A solid band of the accent color with serif type.
+        readonly property bool band: look === "band"
+        // A sheet of warm paper with a small label above it.
+        readonly property bool paper: look === "paper"
+        // A fine-bordered field joined to a solid accent button.
+        readonly property bool split: look === "split"
+        // Looks that end in an arrow.
+        readonly property bool arrowed: headline || band || split
+        readonly property color pillInk: win98 ? "#000000" : paper ? "#1d1b16" : band ? root.shade : root.ink
+        readonly property string face: lcd ? "monospace" : win98 ? "Tahoma" : band ? "Noto Serif" : Style.font.family
+        readonly property real fontPx: headline ? Math.round(height * 0.78)
+                                       : Math.round(Style.font.title * searchPill.fit * (win98 ? 0.92 : band ? 1.08 : 1))
+        // The room the paper look's label takes above the field.
+        readonly property real headRoom: paper ? Math.round(Style.space(20) * Math.max(0.8, Math.min(1.5, fit))) : 0
+        // The split look's button, and the room any arrow takes at the end.
+        readonly property real tailRoom: split ? height : arrowed ? Style.space(34) * fit : 0
+        // The looking glass's color.
+        readonly property color glassInk: root.lcd || settings.glassTint === "ink" ? pillInk
+                                          : settings.glassTint === "accent" ? (band ? pillInk : Commons.Color.accent)
+                                          : settings.tints[settings.glassTint]
+        readonly property bool lit: filled || searchInput.activeFocus
+        // The size setting is a wish: the bar shrinks to whatever fits around
+        // its centre, so it is never cut off by the screen's edges (or runs
+        // under the sort box), and grows back when there is room.
+        readonly property real centerX: settings.searchPlace === "custom"
+                                        ? settings.searchX * parent.width
+                                        : viewport.x + viewport.width / 2
+        readonly property real fitMargin: Style.space(16)
+        readonly property real roomX: Math.min(centerX - fitMargin,
+                                               parent.width - centerX - fitMargin
+                                               - (settings.sortBox ? sortBox.width + Style.space(12) : 0))
+        readonly property real roomY: (settings.searchPlace === "custom"
+                                       ? Math.min(settings.searchY, 1 - settings.searchY) * parent.height
+                                       : parent.height / 2) - fitMargin
+        readonly property real fit: Math.max(0.35, Math.min(root.searchScale,
+                                                            2 * roomX / Style.space(440),
+                                                            2 * roomY / Style.space(38)))
+        width: Math.round(Style.space(filled ? 440 : 340) * searchPill.fit)
+        height: Math.round(Style.space(38) * searchPill.fit)
+        // A preset, or wherever it was dragged to.
+        x: settings.searchPlace === "custom"
+           ? Math.max(0, Math.min(parent.width - width, settings.searchX * parent.width - width / 2))
+           : viewport.x + (viewport.width - width) / 2
+        y: settings.searchPlace === "custom"
+           ? Math.max(headRoom, Math.min(parent.height - height, settings.searchY * parent.height - height / 2))
+           : settings.searchPlace === "center" ? (parent.height - height) / 2
+           : settings.searchPlace === "bottom" ? parent.height - Style.space(96) - height
+           : Style.space(36) + headRoom
+        radius: lcd ? Math.round(Style.space(3) * searchPill.fit)
+                : paper ? Math.round(Style.space(5) * searchPill.fit)
+                : (look === "glass" || hairline) ? height / 2
+                : 0
+        color: lcd ? Util.alpha(root.ink, lit ? 0.12 : 0.06)
+               : look === "glass" ? root.inkAlpha(filled ? 0.22 : 0.13)
+               : band ? Commons.Color.accent
+               : paper ? "#ece8dd"
+               : "transparent"
+        border.width: (look === "glass" || lcd) ? settings.searchBorder
+                      : (hairline || split) ? Math.max(1, settings.searchBorder)
+                      : 0
+        border.color: lcd ? Util.alpha(root.ink, 0.85)
+                      : (hairline || split) ? root.inkAlpha(lit ? 0.9 : 0.5)
+                      : root.inkAlpha(lit ? 0.5 : 0.24)
+        Behavior on border.color { ColorAnimation { duration: Style.duration(180); easing.type: Easing.OutCubic } }
+
+        // Windows 98: a raised grey frame around a sunken white field.
+        Item {
+          visible: searchPill.win98
+          anchors.fill: parent
+          anchors.margins: -Style.space(5)
+          Rectangle { anchors.fill: parent; color: "#000000" }
+          Rectangle { width: parent.width - 1; height: parent.height - 1; color: "#dfdfdf" }
+          Rectangle { x: 1; y: 1; width: parent.width - 2; height: parent.height - 2; color: "#808080" }
+          Rectangle { x: 1; y: 1; width: parent.width - 3; height: parent.height - 3; color: "#ffffff" }
+          Rectangle { x: 2; y: 2; width: parent.width - 4; height: parent.height - 4; color: "#c0c0c0" }
+        }
+        Item {
+          visible: searchPill.win98
+          anchors.fill: parent
+          Rectangle { anchors.fill: parent; color: "#ffffff" }
+          Rectangle { width: parent.width - 1; height: parent.height - 1; color: "#808080" }
+          Rectangle { x: 1; y: 1; width: parent.width - 2; height: parent.height - 2; color: "#dfdfdf" }
+          Rectangle { x: 1; y: 1; width: parent.width - 3; height: parent.height - 3; color: "#000000" }
+          Rectangle { x: 2; y: 2; width: parent.width - 4; height: parent.height - 4; color: "#ffffff" }
+        }
+
+        // The plain look is just text, with or without a line under it; the
+        // headline always sits on a thin rule.
+        Rectangle {
+          visible: (searchPill.plain && settings.searchUnderline) || searchPill.headline
+          anchors.left: parent.left
+          anchors.right: parent.right
+          anchors.bottom: parent.bottom
+          anchors.bottomMargin: searchPill.headline ? -Style.space(6) * searchPill.fit : 0
+          height: searchPill.headline ? 1 : 2
+          color: Util.alpha(root.ink, searchPill.lit ? 0.9 : 0.5)
+        }
+
+        // A soft sheen along the top edge, the way light catches glass.
+        Rectangle {
+          visible: searchPill.look === "glass"
+          anchors.fill: parent
+          radius: parent.radius
+          gradient: Gradient {
+            GradientStop { position: 0.0; color: root.inkAlpha(0.16) }
+            GradientStop { position: 0.5; color: root.inkAlpha(0.0) }
+          }
+        }
+
+        // Paper: a small spaced-out label above the sheet.
+        Text {
+          visible: searchPill.paper
+          textFormat: Text.PlainText
+          x: Style.space(2)
+          y: -searchPill.headRoom
+          width: parent.width
+          height: searchPill.headRoom
+          verticalAlignment: Text.AlignVCenter
+          elide: Text.ElideRight
+          text: strings.t("search.prompt").toUpperCase()
+          color: root.inkAlpha(0.75)
+          font.family: Style.font.family
+          font.letterSpacing: 1.5
+          font.pixelSize: Math.round(searchPill.headRoom * 0.52)
+        }
+
+        // Split: the accent button the field is joined to.
+        Rectangle {
+          visible: searchPill.split
+          anchors.right: parent.right
+          width: searchPill.tailRoom
+          height: parent.height
+          color: Commons.Color.accent
+        }
+        // The arrow the headline, band and split looks end in. It opens the
+        // first match, like Enter.
+        Text {
+          visible: searchPill.arrowed
+          textFormat: Text.PlainText
+          anchors.right: parent.right
+          width: searchPill.tailRoom
+          height: parent.height
+          horizontalAlignment: Text.AlignHCenter
+          verticalAlignment: Text.AlignVCenter
+          text: "→"
+          color: searchPill.split ? root.shade : searchPill.pillInk
+          opacity: searchPill.filled || searchPill.split ? 1 : 0.6
+          font.pixelSize: Math.round(Style.font.title * 1.2 * searchPill.fit)
+          MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: if (root.query !== "" && root.apps.length > 0) root.openApp(root.apps[0])
+          }
+        }
 
         Behavior on width {
           NumberAnimation { duration: Style.duration(220); easing.type: Easing.Bezier; easing.bezierCurve: Style.easeOut }
@@ -360,37 +577,47 @@ Item {
         // Swallow clicks so they don't dismiss the launcher.
         MouseArea { anchors.fill: parent }
 
-        // Magnifier glyph.
-        Item {
-          x: Style.space(12) * root.searchScale
-          scale: root.searchScale
+        // Right-click the search bar for its settings: the card opens on the
+        // Search tab, or closes again if it is already there.
+        TapHandler {
+          acceptedButtons: Qt.RightButton
+          onTapped: {
+            if (root.settingsOpen && settingsCard.tab === "search") {
+              root.settingsOpen = false
+            } else {
+              settingsCard.tab = "search"
+              root.settingsOpen = true
+            }
+          }
+        }
+
+        // The looking glass, in the style, color and size the settings pick.
+        Magnifier {
+          id: magnifier
+          visible: settings.glassStyle !== "off"
+          x: Style.space(12) * searchPill.fit
           anchors.verticalCenter: parent.verticalCenter
-          width: 16
-          height: 16
-          opacity: 0.7
-          Rectangle {
-            width: 12; height: 12; radius: 6
-            color: "transparent"
-            border.width: 1.5
-            border.color: root.ink
-          }
-          Rectangle {
-            x: 9.5; y: 11.5
-            width: 6; height: 1.5; radius: 1
-            color: root.ink
-            rotation: 45
-            transformOrigin: Item.Left
-          }
+          transformOrigin: Item.Left
+          scale: searchPill.fit * settings.glassSize / 100
+          style: settings.glassStyle
+          color: searchPill.glassInk
+          opacity: settings.glassTint === "ink" || root.lcd ? 0.7 : 1
         }
 
         Text {
           textFormat: Text.PlainText
           anchors.fill: searchInput
+          anchors.leftMargin: caret.width + 3
           verticalAlignment: Text.AlignVCenter
-          text: strings.t("search.placeholder")
-          color: root.inkAlpha(0.6)
-          font.family: Style.font.family
-          font.pixelSize: Math.round(Style.font.title * root.searchScale)
+          text: searchPill.lcd ? strings.t("search.placeholder").toUpperCase() : strings.t("search.placeholder")
+          color: Util.alpha(searchPill.pillInk, 0.6)
+          font.family: searchPill.face
+          font.bold: searchPill.headline
+          font.italic: searchPill.hairline || searchPill.band
+          font.weight: searchPill.hairline ? Font.Light : searchPill.headline ? Font.Bold : Font.Normal
+          font.capitalization: searchPill.headline ? Font.AllUppercase : Font.MixedCase
+          font.pixelSize: searchPill.fontPx
+          elide: Text.ElideRight
           visible: !searchPill.filled
         }
 
@@ -398,15 +625,52 @@ Item {
         TextInput {
           id: searchInput
           anchors.fill: parent
-          anchors.leftMargin: Style.space(38) * root.searchScale
-          anchors.rightMargin: Style.space(36) * root.searchScale
+          // The text starts after the looking glass, however big it is.
+          anchors.leftMargin: settings.glassStyle === "off" ? Style.space(16) * searchPill.fit
+                              : (Style.space(12) + 16 * settings.glassSize / 100 + Style.space(10)) * searchPill.fit
+          anchors.rightMargin: Style.space(36) * searchPill.fit + searchPill.tailRoom
           verticalAlignment: TextInput.AlignVCenter
-          color: root.ink
-          selectionColor: Commons.Color.accent
-          font.family: Style.font.family
-          font.pixelSize: Math.round(Style.font.title * root.searchScale)
+          color: searchPill.pillInk
+          selectionColor: searchPill.lcd ? Util.alpha(root.ink, 0.35) : searchPill.win98 ? "#000080"
+                          : searchPill.band ? searchPill.pillInk : Commons.Color.accent
+          selectedTextColor: searchPill.win98 ? "#ffffff" : searchPill.band ? Commons.Color.accent : searchPill.pillInk
+          font.family: searchPill.face
+          font.capitalization: searchPill.lcd || searchPill.headline ? Font.AllUppercase : Font.MixedCase
+          font.bold: searchPill.headline
+          font.pixelSize: searchPill.fontPx
           clip: true
           focus: true
+          // The caret is drawn below, in the shape the settings pick.
+          cursorDelegate: Item { width: 0; height: 0 }
+
+          Rectangle {
+            id: caret
+            visible: searchInput.activeFocus
+            readonly property real glyph: Math.round(searchInput.font.pixelSize * 0.58)
+            readonly property real lineHeight: searchInput.cursorRectangle.height
+            x: searchInput.cursorRectangle.x
+            y: settings.searchCaret === "underscore" ? searchInput.cursorRectangle.y + lineHeight * 0.86
+               : settings.searchCaret === "block" ? searchInput.cursorRectangle.y + lineHeight * 0.12
+               : searchInput.cursorRectangle.y
+            width: settings.searchCaret === "line" ? Math.max(1.5, searchInput.font.pixelSize * 0.09) : glyph
+            height: settings.searchCaret === "underscore" ? Math.max(2, searchInput.font.pixelSize * 0.12)
+                    : settings.searchCaret === "block" ? lineHeight * 0.76 : lineHeight
+            color: searchPill.pillInk
+            // Blinks unless the settings say solid, and stays lit while typing.
+            Timer {
+              id: blink
+              running: caret.visible && settings.searchBlink
+              repeat: true
+              interval: 530
+              onTriggered: caret.opacity = caret.opacity > 0.5 ? 0 : 1
+              onRunningChanged: if (!running) caret.opacity = 1
+            }
+            Connections {
+              target: searchInput
+              function onTextChanged() { caret.opacity = 1; blink.restart() }
+              function onCursorPositionChanged() { caret.opacity = 1; blink.restart() }
+            }
+          }
 
           // Arrows and PageUp/PageDown change page, Enter opens the first
           // match, Escape backs out one step at a time: the search, then the
@@ -457,24 +721,95 @@ Item {
         // Clear button.
         Rectangle {
           anchors.right: parent.right
-          anchors.rightMargin: Style.space(10) * root.searchScale
+          anchors.rightMargin: Style.space(10) * searchPill.fit + searchPill.tailRoom
           anchors.verticalCenter: parent.verticalCenter
-          width: Math.round(Style.space(18) * root.searchScale)
+          width: Math.round(Style.space(18) * searchPill.fit)
           height: width
-          radius: width / 2
-          color: root.inkAlpha(0.25)
+          radius: searchPill.win98 ? 0 : width / 2
+          color: searchPill.win98 ? "#c0c0c0" : searchPill.hairline ? "transparent" : Util.alpha(searchPill.pillInk, 0.2)
+          border.width: searchPill.win98 || searchPill.hairline ? 1 : 0
+          border.color: searchPill.win98 ? "#000000" : searchPill.pillInk
           visible: searchPill.filled
           Text {
             textFormat: Text.PlainText
             anchors.centerIn: parent
             text: "✕"
-            color: root.ink
+            color: searchPill.pillInk
             font.pixelSize: Style.font.caption
           }
           MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
             onClicked: searchInput.clear()
+          }
+        }
+
+        // ---- Edit mode: while the settings card is open ---------------------
+        Rectangle {
+          visible: root.settingsOpen
+          anchors.fill: parent
+          anchors.margins: -Style.space(5)
+          radius: searchPill.radius > 0 ? searchPill.radius + Style.space(5) : 0
+          color: "transparent"
+          border.width: 1
+          border.color: root.lcd ? root.ink : Commons.Color.accent
+        }
+        // Drag anywhere on the bar to move it.
+        MouseArea {
+          id: moveArea
+          visible: root.settingsOpen
+          enabled: root.settingsOpen
+          anchors.fill: parent
+          cursorShape: Qt.SizeAllCursor
+          property point grab
+          property real startX
+          property real startY
+          onPressed: function(mouse) {
+            grab = mapToItem(stage, mouse.x, mouse.y)
+            startX = searchPill.x
+            startY = searchPill.y
+          }
+          onPositionChanged: function(mouse) {
+            if (!pressed) return
+            var at = mapToItem(stage, mouse.x, mouse.y)
+            var nx = Math.max(0, Math.min(stage.width - searchPill.width, startX + at.x - grab.x))
+            var ny = Math.max(0, Math.min(stage.height - searchPill.height, startY + at.y - grab.y))
+            // Snaps to the middle of the screen.
+            if (Math.abs(nx + searchPill.width / 2 - stage.width / 2) < Style.space(12)) nx = (stage.width - searchPill.width) / 2
+            settings.preview("searchPlace", "custom")
+            settings.preview("searchX", (nx + searchPill.width / 2) / stage.width)
+            settings.preview("searchY", (ny + searchPill.height / 2) / stage.height)
+          }
+          onReleased: settings.save()
+        }
+        // Drag the corner to resize it.
+        Rectangle {
+          visible: root.settingsOpen
+          width: Style.space(12)
+          height: width
+          radius: 2
+          anchors.right: parent.right
+          anchors.bottom: parent.bottom
+          anchors.margins: 1
+          color: root.lcd ? root.ink : Commons.Color.accent
+          MouseArea {
+            anchors.fill: parent
+            anchors.margins: -Style.space(6)
+            cursorShape: Qt.SizeFDiagCursor
+            property real grabX
+            property real startSize
+            property real startWidth
+            onPressed: function(mouse) {
+              grabX = mapToItem(stage, mouse.x, mouse.y).x
+              startSize = Math.round(searchPill.fit * 100)
+              startWidth = searchPill.width
+            }
+            onPositionChanged: function(mouse) {
+              if (!pressed) return
+              var dx = mapToItem(stage, mouse.x, mouse.y).x - grabX
+              settings.preview("searchSize", Math.round(startSize * (startWidth + dx) / startWidth))
+            }
+            onReleased: settings.save()
           }
         }
       }
@@ -537,13 +872,14 @@ Item {
       // ---- Settings button, in the top corner --------------------------------
       Rectangle {
         id: gear
+        // Hidden unless the settings ask for it; the dock's menu opens settings too.
         anchors.top: parent.top
         anchors.topMargin: Style.space(36)
         x: parent.width - width - Style.space(20)
         width: Style.space(38)
         height: width
         radius: width / 2
-        visible: !root.settingsOpen
+        visible: settings.showGear && !root.settingsOpen
         color: root.inkAlpha(gearHit.containsMouse ? 0.25 : 0.12)
         border.width: 1
         border.color: root.inkAlpha(0.2)
@@ -569,10 +905,11 @@ Item {
       // ---- The grid -----------------------------------------------------------
       Item {
         id: viewport
-        anchors.top: searchPill.bottom
+        // The grid keeps its place wherever the search bar is dragged to.
+        anchors.top: parent.top
         anchors.bottom: parent.bottom
-        anchors.topMargin: Style.space(16)
-        anchors.bottomMargin: Style.space(78)
+        anchors.topMargin: settings.searchPlace === "top" ? searchPill.height + searchPill.headRoom + Style.space(52) : Style.space(60)
+        anchors.bottomMargin: Style.space(78) + (settings.searchPlace === "bottom" ? searchPill.height + searchPill.headRoom + Style.space(20) : 0)
         // Centered in what the settings card leaves free. Placed by x so it
         // stays clear of the card in a right-to-left layout too.
         x: Math.round((parent.width - panel.reserve - width) / 2)
@@ -685,23 +1022,37 @@ Item {
           }
         }
 
-        // Shown when the search matches nothing.
+        // Shown when the search matches nothing: a shrug and a quip, a new
+        // one each time the matches run out.
         Column {
+          id: nothingFound
           anchors.centerIn: parent
-          spacing: Style.space(12)
+          width: parent.width - Style.space(40)
+          spacing: Style.space(16)
           visible: root.apps.length === 0
+          property int pick: 0
+          // The search as typed, cut short so a long one cannot fill the screen.
+          readonly property string asked: root.query.length > 24 ? root.query.slice(0, 24) + "…" : root.query
+          readonly property var quips: [strings.t("search.empty.1"), strings.t("search.empty.2"), strings.t("search.empty.3"),
+                                        strings.t("search.empty.4"), strings.t("search.empty.5"), strings.t("search.empty.6"),
+                                        strings.t("search.empty.7"), strings.t("search.empty.8")]
+          onVisibleChanged: if (visible) pick = Math.floor(Math.random() * quips.length)
           Text {
             textFormat: Text.PlainText
             anchors.horizontalCenter: parent.horizontalCenter
-            text: "⌕"
-            color: root.inkAlpha(0.6)
-            font.pixelSize: Style.font.displayLarge * 1.7
+            text: "¯\\_( ͡° ͜ʖ ͡°)_/¯"
+            color: root.inkAlpha(0.8)
+            font.family: "Noto Sans"
+            font.pixelSize: Style.font.displayLarge * 1.3
           }
           Text {
             textFormat: Text.PlainText
-            text: strings.t("search.empty")
-            color: root.inkAlpha(0.6)
-            font.family: Style.font.family
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
+            text: nothingFound.quips[nothingFound.pick].replace("%1", nothingFound.asked)
+            color: root.inkAlpha(0.7)
+            font.family: root.lcd ? "monospace" : Style.font.family
             font.pixelSize: Style.font.heading
           }
         }
@@ -726,11 +1077,14 @@ Item {
         Rectangle {
           anchors.fill: appItem
           anchors.margins: -Style.space(8)
-          radius: Style.cornerRadius
+          radius: Style.cornerRadius * 1.5
           visible: root.cursorActive && cell.appIndex === root.selectedIndex
-          color: root.inkAlpha(0.14)
+          gradient: Gradient {
+            GradientStop { position: 0.0; color: root.inkAlpha(0.2) }
+            GradientStop { position: 1.0; color: root.inkAlpha(0.08) }
+          }
           border.width: 1
-          border.color: root.inkAlpha(0.3)
+          border.color: root.inkAlpha(0.34)
         }
 
         Column {
@@ -783,11 +1137,21 @@ Item {
             MultiEffect {
               anchors.fill: icon
               source: icon
-              shadowEnabled: true
-              shadowColor: "black"
-              shadowOpacity: hit.containsMouse ? 0.55 : 0.45
-              shadowBlur: hit.containsMouse ? 0.75 : 0.55
-              shadowVerticalOffset: hit.containsMouse ? 14 : 8
+              // On the LCD the icons are drawn in the screen's own two tones:
+              // white becomes the screen's green and black stays dark, with
+              // the hard offset shadow LCD pixels cast on the glass behind.
+              contrast: root.lcd ? 0.35 : 0
+              brightness: root.lcd ? -0.06 : 0
+              colorization: root.lcd ? 1 : 0
+              // Tinted with whichever of the screen and ink is lighter, so a
+              // dark screen gets light icons rather than invisible ones.
+              colorizationColor: root.ink.hslLightness > root.shade.hslLightness ? root.ink : root.shade
+              shadowEnabled: !root.lcd || settings.lcdShadow > 0
+              shadowColor: root.lcd ? root.ink : "black"
+              shadowOpacity: root.lcd ? 0.28 : hit.containsMouse ? 0.55 : 0.45
+              shadowBlur: root.lcd ? 0 : hit.containsMouse ? 0.75 : 0.55
+              shadowHorizontalOffset: root.lcd ? settings.lcdShadow : 0
+              shadowVerticalOffset: root.lcd ? settings.lcdShadow : hit.containsMouse ? 14 : 8
             }
           }
 
@@ -798,10 +1162,11 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
             color: root.ink
-            font.family: Style.font.family
+            font.family: root.lcd ? "monospace" : Style.font.family
             font.pixelSize: root.labelSize
-            font.weight: Font.Medium
-            style: Text.Raised
+            font.weight: root.lcd ? Font.Bold : Font.Medium
+            font.capitalization: root.lcd ? Font.AllUppercase : Font.MixedCase
+            style: root.lcd ? Text.Normal : Text.Raised
             styleColor: Util.alpha(root.shade, 0.8)
             text: root.appLibrary ? root.appLibrary.entryName(cell.entry) : ""
           }
@@ -852,40 +1217,103 @@ Item {
         readonly property int step: side === "left" ? -root.hSign : side === "right" ? root.hSign
                                   : side === "top" ? -root.vSign : root.vSign
         readonly property int target: root.page + step
-        // "edge" is a bar the length of its side; "chevron" has no backing.
+        // "edge" is a bar of color flush against the screen's edge, the
+        // length of its side, that widens under the pointer to show a long
+        // arrow; "chevron" has no backing.
         readonly property bool edge: settings.arrows === "edge"
         readonly property bool plain: settings.arrows === "chevron"
         readonly property int knob: Style.space(46)
+        // The edge bar: the strip it takes under the pointer, and at rest.
+        readonly property int reach: alongX ? Style.space(64) : Style.space(30)
+        readonly property int rest: Style.space(8)
+        readonly property color barColor: root.lcd ? root.ink : Commons.Color.accent
 
         visible: root.paged && settings.arrows !== "off" && alongX === root.horizontal
                  && target >= 0 && target < root.pageCount
-        width: edge && !alongX ? viewport.width : knob
-        height: edge && alongX ? viewport.height : knob
+        width: !edge ? knob : alongX ? reach : parent.width - panel.reserve
+        height: !edge ? knob : alongX ? parent.height : reach
         // By x rather than anchors so each arrow stays on the side it points
         // to in every language.
-        x: side === "left" ? Style.space(20)
+        x: edge ? (side === "right" ? parent.width - panel.reserve - width : 0)
+         : side === "left" ? Style.space(20)
          : side === "right" ? parent.width - panel.reserve - width - Style.space(20)
          : viewport.x + (viewport.width - width) / 2
-        y: side === "top" ? viewport.y
+        y: edge ? (side === "bottom" ? parent.height - height : 0)
+         : side === "top" ? viewport.y
          : side === "bottom" ? viewport.y + viewport.height - height
          : viewport.y + (viewport.height - height) / 2
-        opacity: arrowHit.containsMouse ? 1 : (edge ? 0.35 : 0.55)
+        opacity: edge || arrowHit.containsMouse ? 1 : 0.55
         Behavior on opacity { NumberAnimation { duration: Style.duration(180); easing.type: Easing.OutCubic } }
+
+        // The edge bar, growing in from its side of the screen.
+        Rectangle {
+          id: bar
+          visible: arrow.edge
+          readonly property real thick: arrowHit.containsMouse ? arrow.reach : arrow.rest
+          width: arrow.alongX ? thick : parent.width
+          height: arrow.alongX ? parent.height : thick
+          x: arrow.side === "right" ? parent.width - width : 0
+          y: arrow.side === "bottom" ? parent.height - height : 0
+          color: Util.alpha(arrow.barColor, arrowHit.containsMouse ? 1 : 0.6)
+          Behavior on width { NumberAnimation { duration: Style.duration(220); easing.type: Easing.OutCubic } }
+          Behavior on height { NumberAnimation { duration: Style.duration(220); easing.type: Easing.OutCubic } }
+          Behavior on color { ColorAnimation { duration: Style.duration(180); easing.type: Easing.OutCubic } }
+
+          // A long thin arrow, drawn pointing right and turned to face the
+          // bar's side, with the page it leads to written beside it.
+          Item {
+            anchors.centerIn: parent
+            width: Style.space(34)
+            height: Style.space(18)
+            opacity: arrowHit.containsMouse ? 1 : 0
+            rotation: arrow.side === "bottom" ? 90 : arrow.side === "left" ? 180 : arrow.side === "top" ? 270 : 0
+            scale: arrow.alongX ? 1 : 0.7
+            Behavior on opacity { NumberAnimation { duration: Style.duration(180); easing.type: Easing.OutCubic } }
+            Rectangle { y: parent.height / 2 - 1; width: parent.width; height: 2; color: root.shade }
+            Repeater {
+              model: [40, -40]
+              Rectangle {
+                required property int modelData
+                x: parent.width - width
+                y: parent.height / 2 - 1
+                width: Style.space(13)
+                height: 2
+                color: root.shade
+                rotation: modelData
+                transformOrigin: Item.Right
+              }
+            }
+          }
+          Text {
+            visible: arrow.alongX
+            textFormat: Text.PlainText
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: parent.height / 2 + Style.space(22)
+            opacity: arrowHit.containsMouse ? 1 : 0
+            text: Commons.I18n.formatNumber(arrow.target + 1, 0)
+            color: root.shade
+            font.family: Style.font.family
+            font.bold: true
+            font.pixelSize: Style.font.body
+            Behavior on opacity { NumberAnimation { duration: Style.duration(180); easing.type: Easing.OutCubic } }
+          }
+        }
 
         Rectangle {
           anchors.fill: parent
-          visible: !arrow.plain
-          radius: arrow.edge ? Style.cornerRadius : width / 2
+          visible: !arrow.plain && !arrow.edge
+          radius: width / 2
           color: root.inkAlpha(arrowHit.containsMouse ? 0.25 : 0.12)
           border.width: 1
           border.color: root.inkAlpha(0.2)
-          scale: !arrow.edge && arrowHit.containsMouse ? 1.1 : 1
+          scale: arrowHit.containsMouse ? 1.1 : 1
           Behavior on scale { NumberAnimation { duration: Style.duration(180); easing.type: Easing.OutCubic } }
         }
 
         // Chevron: two strokes meeting at a point, drawn pointing right and
         // turned to face the arrow's side.
         Item {
+          visible: !arrow.edge
           anchors.centerIn: parent
           width: 12
           height: 12
@@ -1009,7 +1437,9 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         store: settings
         catalog: strings
-        dock: root.dock
+        ink: root.ink
+        shade: root.shade
+        lcd: root.lcd
         maxHeight: parent.height - Style.space(80)
         onCloseRequested: root.settingsOpen = false
       }
