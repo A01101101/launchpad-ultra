@@ -854,12 +854,17 @@ Item {
         opacity: gearHit.containsMouse ? 1 : 0.55
         Behavior on opacity { NumberAnimation { duration: Style.duration(180); easing.type: Easing.OutCubic } }
 
-        Text {
-          textFormat: Text.PlainText
+        // The Nerd Font cog (nf-fa-gear), a solid silhouette, centered on its
+        // ink the way the bar's icons are.
+        OpticalGlyph {
           anchors.centerIn: parent
-          text: "⚙"
+          width: Math.round(parent.width * 0.5)
+          height: width
+          text: "\uf013"
+          fontFamily: Style.font.family
+          fontSize: Style.font.heading
+          paintedSize: width
           color: root.ink
-          font.pixelSize: Style.font.heading
         }
         MouseArea {
           id: gearHit
