@@ -520,9 +520,9 @@ Rectangle {
           label: card.catalog.t("settings.searchLook")
           key: "searchLook"
           options: [card.option("glass", "settings.searchLook.glass"), card.option("plain", "settings.searchLook.plain"),
-                    card.option("win98", "settings.searchLook.win98"), card.option("hairline", "settings.searchLook.hairline"),
-                    card.option("headline", "settings.searchLook.headline"), card.option("band", "settings.searchLook.band"),
-                    card.option("paper", "settings.searchLook.paper"), card.option("split", "settings.searchLook.split")]
+                    card.option("win98", "settings.searchLook.win98"), card.option("frame", "settings.searchLook.frame"),
+                    card.option("headline", "settings.searchLook.headline"), card.option("brutal", "settings.searchLook.brutal"),
+                    card.option("paper", "settings.searchLook.paper"), card.option("aurora", "settings.searchLook.aurora")]
         }
         Label {
           visible: card.lcd
@@ -559,7 +559,7 @@ Rectangle {
           format: function(value) { return card.catalog.t("settings.percent").arg(Commons.I18n.formatNumber(value, 0)) }
         }
         SliderRow {
-          visible: card.lcd || ["glass", "hairline", "split"].indexOf(card.store.searchLook) !== -1
+          visible: card.lcd || ["glass", "frame", "aurora"].indexOf(card.store.searchLook) !== -1
           label: card.catalog.t("settings.searchBorder")
           key: "searchBorder"
           minimum: 0

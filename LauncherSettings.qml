@@ -41,10 +41,9 @@ Item {
     lcdTint: { value: "green", options: ["green", "amber", "blue", "grey", "violet", "paper", "night"] },
     lcdShadow: { value: 3, min: 0, max: 12 },
     // The search bar's look, caret, and underline (for the plain look).
-    // Past the first three: a thin outlined pill, giant capitals over a rule,
-    // a serif band of the accent color, labelled paper, and a fine-bordered
-    // square field.
-    searchLook: { value: "glass", options: ["glass", "plain", "win98", "hairline", "headline", "band", "paper", "split"] },
+    // Past the first three: viewfinder corners, giant capitals over a rule,
+    // a neo-brutalist block, labelled paper, and a glowing aurora ring.
+    searchLook: { value: "glass", options: ["glass", "plain", "win98", "frame", "headline", "brutal", "paper", "aurora"] },
     // The looking glass in the search bar: its drawing, color and size in
     // percent.
     glassStyle: { value: "classic", options: ["classic", "fine", "bold", "filled", "square", "pixel", "arrow", "dot", "off"] },
@@ -166,6 +165,9 @@ Item {
     } catch (e) {
       stored = {}
     }
+    // The looks that were redrawn keep their place in a saved file.
+    var renamed = { hairline: "frame", band: "brutal", split: "aurora" }
+    if (stored && renamed[stored.searchLook]) stored.searchLook = renamed[stored.searchLook]
     values = withDefaults(stored)
   }
 

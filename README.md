@@ -65,7 +65,7 @@ you change things.
 | Page indicator | Pill / Dots / Numbers / Off | Pill |
 | Page arrows | Round / Plain / Edge / Off | Round |
 | Click on empty space | Close / Turn page (then double-click closes) | Close |
-| Search look | Glass / Plain / Win98 / Hairline (thin outlined pill) / Headline (giant capitals over a rule) / Band (accent-colored, serif type) / Paper (labelled sheet) / Split (fine-bordered square field) | Glass |
+| Search look | Glass / Plain / Win98 / Frame (viewfinder corners that close in as you type) / Headline (giant capitals over a rule) / Brutal (accent block, black outline, hard shadow it presses into) / Paper (labelled sheet) / Aurora (dark pill in a glowing ring that turns while you search) | Glass |
 | Looking glass style | Classic / Fine / Bold / Filled / Square / Pixel / Arrow / Dot / Off | Classic |
 | Looking glass size | 60% to 200% | 100% |
 | Search underline | on / off (Plain look) | on |

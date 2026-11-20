@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Wayland
 import QtQuick
 import QtQuick.Effects
+import QtQuick.Shapes
 import qs.Commons
 import qs.Commons as Commons
 import qs.Ui
@@ -421,20 +422,27 @@ Item {
         readonly property bool lcd: look === "lcd"
         readonly property bool win98: look === "win98"
         readonly property bool plain: look === "plain"
-        // A thin outlined pill with a light italic prompt.
-        readonly property bool hairline: look === "hairline"
+        // Viewfinder corners around open space, with light italic serif type;
+        // the corners close in while searching.
+        readonly property bool frame: look === "frame"
         // Giant bold capitals set straight on the screen, over a thin rule.
         readonly property bool headline: look === "headline"
-        // A solid band of the accent color with serif type.
-        readonly property bool band: look === "band"
+        // Neo-brutalist: an accent block, a heavy black outline and a hard
+        // offset shadow it presses into while searching.
+        readonly property bool brutal: look === "brutal"
         // A sheet of warm paper with a small label above it.
         readonly property bool paper: look === "paper"
-        // A fine-bordered square field.
-        readonly property bool split: look === "split"
-        readonly property color pillInk: win98 ? "#000000" : paper ? "#1d1b16" : band ? root.shade : root.ink
-        readonly property string face: lcd ? "monospace" : win98 ? "Tahoma" : band ? "Noto Serif" : Style.font.family
+        // A dark pill inside a glowing ring of the accent's neighbouring hues,
+        // which turns slowly while searching.
+        readonly property bool aurora: look === "aurora"
+        readonly property color pillInk: win98 ? "#000000" : paper ? "#1d1b16" : brutal ? "#111111" : aurora ? "#f2f2f5" : root.ink
+        readonly property string face: lcd ? "monospace" : win98 ? "Tahoma" : frame ? "Noto Serif" : Style.font.family
         readonly property real fontPx: headline ? Math.round(height * 0.78)
-                                       : Math.round(Style.font.title * searchPill.fit * (win98 ? 0.92 : band ? 1.08 : 1))
+                                       : Math.round(Style.font.title * searchPill.fit * (win98 ? 0.92 : frame ? 1.1 : 1))
+        // How far a brutal bar has pressed into its shadow.
+        readonly property real press: brutal && filled ? Math.round(Style.space(3) * fit) : 0
+        Behavior on press { NumberAnimation { duration: Style.duration(120); easing.type: Easing.OutCubic } }
+        readonly property real ringWidth: Math.max(2, settings.searchBorder)
         // The room the paper look's label takes above the field.
         readonly property real headRoom: paper ? Math.round(Style.space(20) * Math.max(0.8, Math.min(1.5, fit))) : 0
         // The looking glass's color.
@@ -469,19 +477,21 @@ Item {
            : Style.space(36) + headRoom
         radius: lcd ? Math.round(Style.space(3) * searchPill.fit)
                 : paper ? Math.round(Style.space(5) * searchPill.fit)
-                : (look === "glass" || hairline) ? height / 2
+                : (look === "glass" || aurora) ? height / 2
+                : brutal ? Math.round(Style.space(4) * searchPill.fit)
                 : 0
         color: lcd ? Util.alpha(root.ink, lit ? 0.12 : 0.06)
                : look === "glass" ? root.inkAlpha(filled ? 0.22 : 0.13)
-               : band ? Commons.Color.accent
+               : brutal ? Commons.Color.accent
                : paper ? "#ece8dd"
                : "transparent"
         border.width: (look === "glass" || lcd) ? settings.searchBorder
-                      : (hairline || split) ? Math.max(1, settings.searchBorder)
+                      : brutal ? Math.max(2, Math.round(Style.space(2) * fit))
                       : 0
         border.color: lcd ? Util.alpha(root.ink, 0.85)
-                      : (hairline || split) ? root.inkAlpha(lit ? 0.9 : 0.5)
+                      : brutal ? "#111111"
                       : root.inkAlpha(lit ? 0.5 : 0.24)
+        transform: Translate { x: searchPill.press; y: searchPill.press }
         Behavior on border.color { ColorAnimation { duration: Style.duration(180); easing.type: Easing.OutCubic } }
 
         // Windows 98: a raised grey frame around a sunken white field.
@@ -525,6 +535,110 @@ Item {
           gradient: Gradient {
             GradientStop { position: 0.0; color: root.inkAlpha(0.16) }
             GradientStop { position: 0.5; color: root.inkAlpha(0.0) }
+          }
+        }
+
+        // Brutal: the hard shadow block, set back from the bar; the bar slides
+        // toward it as it presses in, so the block itself stays put.
+        Rectangle {
+          visible: searchPill.brutal
+          z: -1
+          readonly property real drop: Math.round(Style.space(6) * searchPill.fit)
+          x: drop - searchPill.press
+          y: drop - searchPill.press
+          width: parent.width
+          height: parent.height
+          radius: parent.radius
+          color: "#111111"
+        }
+
+        // Frame: four corner brackets, a little wide of the field until a
+        // search pulls them in.
+        Item {
+          id: frameCorners
+          visible: searchPill.frame
+          readonly property real reach: searchPill.filled ? 0 : Math.round(Style.space(6) * searchPill.fit)
+          readonly property real arm: Math.round(searchPill.height * 0.34)
+          readonly property real line: searchPill.ringWidth
+          readonly property color tone: root.inkAlpha(searchPill.filled ? 0.95 : 0.55)
+          Behavior on reach { NumberAnimation { duration: Style.duration(220); easing.type: Easing.OutCubic } }
+          anchors.fill: parent
+          anchors.margins: -reach
+
+          Repeater {
+            model: 4
+            delegate: Item {
+              required property int index
+              readonly property bool right: index === 1 || index === 3
+              readonly property bool bottom: index >= 2
+              x: right ? frameCorners.width - frameCorners.arm : 0
+              y: bottom ? frameCorners.height - frameCorners.arm : 0
+              width: frameCorners.arm
+              height: frameCorners.arm
+              Rectangle { y: parent.bottom ? parent.height - height : 0; width: parent.width; height: frameCorners.line; color: frameCorners.tone }
+              Rectangle { x: parent.right ? parent.width - width : 0; width: frameCorners.line; height: parent.height; color: frameCorners.tone }
+            }
+          }
+        }
+
+        // Aurora: a ring of the accent and its neighbouring hues under a dark
+        // pill, with a soft glow that brightens while searching.
+        Item {
+          id: auroraRing
+          visible: searchPill.aurora
+          z: -1
+          anchors.fill: parent
+          anchors.margins: -searchPill.ringWidth
+          readonly property color hueA: Commons.Color.accent
+          readonly property color hueB: Qt.hsla((hueA.hslHue + 0.12) % 1, Math.max(0.55, hueA.hslSaturation), 0.62, 1)
+          readonly property color hueC: Qt.hsla((hueA.hslHue + 0.88) % 1, Math.max(0.55, hueA.hslSaturation), 0.58, 1)
+          property real angle: 0
+
+          NumberAnimation on angle {
+            running: auroraRing.visible && searchPill.filled && !Style.reduceMotion
+            from: auroraRing.angle
+            to: auroraRing.angle + 360
+            duration: Style.duration(6000)
+            loops: Animation.Infinite
+          }
+
+          Shape {
+            id: ringShape
+            anchors.fill: parent
+            preferredRendererType: Shape.CurveRenderer
+            ShapePath {
+              strokeColor: "transparent"
+              fillGradient: ConicalGradient {
+                centerX: ringShape.width / 2
+                centerY: ringShape.height / 2
+                angle: auroraRing.angle
+                GradientStop { position: 0.0; color: auroraRing.hueA }
+                GradientStop { position: 0.33; color: auroraRing.hueB }
+                GradientStop { position: 0.66; color: auroraRing.hueC }
+                GradientStop { position: 1.0; color: auroraRing.hueA }
+              }
+              PathRectangle {
+                width: ringShape.width
+                height: ringShape.height
+                radius: ringShape.height / 2
+              }
+            }
+          }
+          MultiEffect {
+            source: ringShape
+            anchors.fill: ringShape
+            z: -1
+            blurEnabled: true
+            blur: 1
+            blurMax: 32
+            opacity: searchPill.filled ? 0.9 : 0.45
+            Behavior on opacity { NumberAnimation { duration: Style.duration(220); easing.type: Easing.OutCubic } }
+          }
+          Rectangle {
+            anchors.fill: parent
+            anchors.margins: searchPill.ringWidth
+            radius: height / 2
+            color: Qt.rgba(0.07, 0.07, 0.09, 0.94)
           }
         }
 
@@ -594,9 +708,9 @@ Item {
           ink: Util.alpha(searchPill.pillInk, 0.6)
           family: searchPill.face
           bold: searchPill.headline
-          italic: searchPill.hairline || searchPill.band
-          weight: searchPill.hairline ? Font.Light : searchPill.headline ? Font.Bold : Font.Normal
-          capitalization: searchPill.headline ? Font.AllUppercase : Font.MixedCase
+          italic: searchPill.frame
+          weight: searchPill.frame ? Font.Light : (searchPill.headline || searchPill.brutal) ? Font.Bold : Font.Normal
+          capitalization: (searchPill.headline || searchPill.brutal) ? Font.AllUppercase : Font.MixedCase
           pixelSize: searchPill.fontPx
         }
 
@@ -611,8 +725,8 @@ Item {
           verticalAlignment: TextInput.AlignVCenter
           color: searchPill.pillInk
           selectionColor: searchPill.lcd ? Util.alpha(root.ink, 0.35) : searchPill.win98 ? "#000080"
-                          : searchPill.band ? searchPill.pillInk : Commons.Color.accent
-          selectedTextColor: searchPill.win98 ? "#ffffff" : searchPill.band ? Commons.Color.accent : searchPill.pillInk
+                          : searchPill.brutal ? "#111111" : Commons.Color.accent
+          selectedTextColor: searchPill.win98 ? "#ffffff" : searchPill.brutal ? Commons.Color.accent : searchPill.pillInk
           font.family: searchPill.face
           font.capitalization: searchPill.lcd || searchPill.headline ? Font.AllUppercase : Font.MixedCase
           font.bold: searchPill.headline
@@ -705,8 +819,8 @@ Item {
           width: Math.round(Style.space(18) * searchPill.fit)
           height: width
           radius: searchPill.win98 ? 0 : width / 2
-          color: searchPill.win98 ? "#c0c0c0" : searchPill.hairline ? "transparent" : Util.alpha(searchPill.pillInk, 0.2)
-          border.width: searchPill.win98 || searchPill.hairline ? 1 : 0
+          color: searchPill.win98 ? "#c0c0c0" : searchPill.frame ? "transparent" : Util.alpha(searchPill.pillInk, 0.2)
+          border.width: searchPill.win98 || searchPill.frame || searchPill.brutal ? Math.max(1, Math.round(searchPill.border.width / 2)) : 0
           border.color: searchPill.win98 ? "#000000" : searchPill.pillInk
           visible: searchPill.filled
           Text {

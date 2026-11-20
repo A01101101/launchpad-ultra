@@ -89,11 +89,8 @@
   "settings.glass": "Looking glass",
   "settings.glassStyle": "Style",
   "settings.glassSize": "Size",
-  "settings.searchLook.hairline": "Hairline",
   "settings.searchLook.headline": "Headline",
-  "settings.searchLook.band": "Band",
   "settings.searchLook.paper": "Paper",
-  "settings.searchLook.split": "Split",
   "search.prompt": "What are you looking for?",
   "settings.lcdTint": "Tint",
   "settings.lcdShadow": "Shadow depth",
@@ -123,5 +120,8 @@
   "settings.prompt.custom": "Custom",
   "settings.prompt.customHint": "Type your own placeholder",
   "search.thinking": "Hmm…",
-  "settings.emptyClick.pageHint": "Double-click empty space to close Launchpad."
+  "settings.emptyClick.pageHint": "Double-click empty space to close Launchpad.",
+  "settings.searchLook.frame": "Frame",
+  "settings.searchLook.brutal": "Brutal",
+  "settings.searchLook.aurora": "Aurora"
 }
