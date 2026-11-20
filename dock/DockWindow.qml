@@ -524,9 +524,10 @@ PanelWindow {
       return appSlot.mapToItem(body, event.x, event.y)
     }
 
-    // Held still, an app moves the whole dock, as a held bar widget moves the
-    // bar; one that starts sliding first is reordered instead.
-    mouse.pressAndHoldInterval: 200
+    // Held still for a long moment, an app moves the whole dock; one that
+    // starts sliding first is reordered or pulled off instead. The wait is
+    // long so a short pause before dragging still reorders.
+    mouse.pressAndHoldInterval: 600
     mouse.cursorShape: appSlot.moving ? Qt.ClosedHandCursor : Qt.PointingHandCursor
 
     mouse.onPressed: function(event) {
