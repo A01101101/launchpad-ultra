@@ -570,7 +570,7 @@ Item {
           opacity: 0.7
         }
 
-        // The word, rotating lines, the head scratcher, or the yellow LCD's
+        // The word, rotating lines, or the yellow LCD's
         // easter egg, as the settings pick.
         SearchPrompt {
           anchors.fill: searchInput

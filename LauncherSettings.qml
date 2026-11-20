@@ -57,9 +57,9 @@ Item {
     searchArrange: { value: false },
     // Whether the bar widens once something is typed.
     searchGrow: { value: true },
-    // What the empty bar says: the word, rotating lines, a head scratcher, or
+    // What the empty bar says: the word, rotating lines, or
     // the yellow LCD's easter egg.
-    searchPrompt: { value: "plain", options: ["plain", "quips", "thinker", "pika"] },
+    searchPrompt: { value: "plain", options: ["plain", "quips", "pika"] },
     // Where the bar sits: a preset, or "custom" at searchX / searchY (the
     // bar's centre as a fraction of the screen), set by dragging it.
     searchPlace: { value: "top", options: ["top", "center", "bottom", "custom"] },

@@ -408,8 +408,7 @@ Rectangle {
         ChipChoice {
           label: card.catalog.t("settings.searchPrompt")
           key: "searchPrompt"
-          options: [card.option("plain", "settings.prompt.plain"), card.option("quips", "settings.prompt.quips"),
-                    card.option("thinker", "settings.prompt.thinker")]
+          options: [card.option("plain", "settings.prompt.plain"), card.option("quips", "settings.prompt.quips")]
                    .concat(card.store.pikaOffered ? [card.option("pika", "settings.prompt.pika")] : [])
         }
         ChipChoice {
