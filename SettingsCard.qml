@@ -18,6 +18,13 @@ Rectangle {
   // The most height the card may take.
   property real maxHeight: 600
   signal closeRequested()
+  // Popped out, the card floats wherever it is dragged by its title row;
+  // docked, it sits down the side of the screen.
+  property bool poppedOut: false
+  signal popToggled()
+  signal dragStarted()
+  signal dragMoved(real dx, real dy)
+  signal dragFinished()
 
   readonly property bool paged: store.scrollStyle === "pages"
 
@@ -257,12 +264,40 @@ Rectangle {
     Item {
       width: parent.width
       height: Math.max(heading.implicitHeight, closeButton.implicitHeight)
+      // Popped out, the title row is the handle the card is dragged by.
+      MouseArea {
+        anchors.fill: parent
+        enabled: card.poppedOut
+        cursorShape: card.poppedOut ? (pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor) : Qt.ArrowCursor
+        property point grab
+        onPressed: function(mouse) {
+          grab = mapToItem(card.parent, mouse.x, mouse.y)
+          card.dragStarted()
+        }
+        onPositionChanged: function(mouse) {
+          if (!pressed) return
+          var at = mapToItem(card.parent, mouse.x, mouse.y)
+          card.dragMoved(at.x - grab.x, at.y - grab.y)
+        }
+        onReleased: card.dragFinished()
+      }
       Label {
         id: heading
         anchors.verticalCenter: parent.verticalCenter
-        width: parent.width - closeButton.width - Style.spacing.lg
+        width: parent.width - closeButton.width - popButton.width - 2 * Style.spacing.lg
         text: card.catalog.t("settings.title")
         font.pixelSize: Style.font.heading
+      }
+      // Pops the card out to float, or docks it back. Nerd Font glyphs:
+      // an arrow out of a box, and arrows pulling in.
+      Button {
+        id: popButton
+        anchors.right: closeButton.left
+        anchors.rightMargin: Style.spacing.sm
+        anchors.verticalCenter: parent.verticalCenter
+        text: card.poppedOut ? "\uf066" : "\uf08e"
+        foreground: card.ink
+        onClicked: card.popToggled()
       }
       Button {
         id: closeButton
@@ -294,6 +329,53 @@ Rectangle {
     foreground: card.ink
     opacity: card.store.isDefault ? 0.5 : 1
     onClicked: card.store.reset()
+  }
+
+  // ---- A scrollbar beside the settings, once they run past the card -------
+  // Drag the thumb, or click the track to jump there; the wheel scrolls too.
+  Item {
+    id: scrollTrack
+    readonly property bool needed: scroller.contentHeight > scroller.height + 1
+    visible: needed
+    x: scroller.x + scroller.width + Math.round((card.inset - width) / 2)
+    y: scroller.y
+    width: Style.space(6)
+    height: scroller.height
+
+    Rectangle {
+      anchors.fill: parent
+      radius: width / 2
+      color: Util.alpha(card.ink, card.lcd ? 0.18 : 0.1)
+    }
+    Rectangle {
+      id: thumb
+      readonly property real span: Math.max(Style.space(28), scrollTrack.height * scroller.height / Math.max(1, scroller.contentHeight))
+      readonly property real travel: scrollTrack.height - span
+      readonly property real reach: Math.max(1, scroller.contentHeight - scroller.height)
+      width: parent.width
+      height: span
+      y: travel * Math.max(0, Math.min(1, scroller.contentY / reach))
+      radius: width / 2
+      color: Util.alpha(card.ink, trackMouse.pressed || trackMouse.containsMouse ? 0.7 : 0.4)
+    }
+    MouseArea {
+      id: trackMouse
+      anchors.fill: parent
+      anchors.margins: -Style.space(5)
+      hoverEnabled: true
+      cursorShape: Qt.PointingHandCursor
+      property real grabOffset: 0
+      function scrollTo(pointerY) {
+        var top = Math.max(0, Math.min(thumb.travel, pointerY - grabOffset))
+        scroller.contentY = thumb.travel > 0 ? top / thumb.travel * thumb.reach : 0
+      }
+      onPressed: function(mouse) {
+        var onThumb = mouse.y >= thumb.y && mouse.y <= thumb.y + thumb.height
+        grabOffset = onThumb ? mouse.y - thumb.y : thumb.height / 2
+        scrollTo(mouse.y)
+      }
+      onPositionChanged: function(mouse) { if (pressed) scrollTo(mouse.y) }
+    }
   }
 
   // ---- The tab's settings, the only part that scrolls --------------------
@@ -408,8 +490,22 @@ Rectangle {
         ChipChoice {
           label: card.catalog.t("settings.searchPrompt")
           key: "searchPrompt"
-          options: [card.option("plain", "settings.prompt.plain"), card.option("quips", "settings.prompt.quips")]
+          options: [card.option("plain", "settings.prompt.plain"), card.option("quips", "settings.prompt.quips"),
+                    card.option("confused", "settings.prompt.confused"), card.option("custom", "settings.prompt.custom")]
                    .concat(card.store.pikaOffered ? [card.option("pika", "settings.prompt.pika")] : [])
+        }
+        // The custom placeholder's words, saved as they are typed.
+        TextField {
+          visible: card.store.searchPrompt === "custom"
+          width: parent.width
+          text: card.store.searchCustom
+          maximumLength: 60
+          placeholderText: card.catalog.t("settings.prompt.customHint")
+          foreground: card.ink
+          onTextEdited: card.store.preview("searchCustom", text)
+          onEditingFinished: card.store.save()
+          // Keys typed here stay here rather than reaching the search bar.
+          Keys.onEscapePressed: function(event) { focus = false; event.accepted = true }
         }
         ChipChoice {
           visible: !card.lcd

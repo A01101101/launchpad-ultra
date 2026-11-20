@@ -302,7 +302,7 @@ Item {
     WlrLayershell.namespace: "launchpad"
 
     // Room the settings card takes from the grid while it is open.
-    readonly property int reserve: root.settingsOpen ? settingsCard.width + Style.space(40) : 0
+    readonly property int reserve: root.settingsOpen && !settings.values.cardPopped ? settingsCard.width + Style.space(40) : 0
 
     // Everything but a dragged icon and the menus. It fades out while an app
     // is dragged toward the dock, and still holds the pointer.
@@ -570,7 +570,7 @@ Item {
           opacity: 0.7
         }
 
-        // The word, rotating lines, or the yellow LCD's
+        // The word, rotating lines, the confused face, custom words, or the yellow LCD's
         // easter egg, as the settings pick.
         SearchPrompt {
           anchors.fill: searchInput
@@ -579,6 +579,7 @@ Item {
           mode: settings.searchPromptShown
           catalog: strings
           pikaSource: settings.pikaSource
+          customText: settings.searchCustom
           upper: searchPill.lcd
           ink: Util.alpha(searchPill.pillInk, 0.6)
           family: searchPill.face
@@ -1405,9 +1406,28 @@ Item {
       SettingsCard {
         id: settingsCard
         visible: root.settingsOpen
-        // By x, like the grid beside it, so the two never swap sides.
-        x: parent.width - width - Style.space(20)
-        anchors.verticalCenter: parent.verticalCenter
+        // Docked, by x like the grid beside it, so the two never swap sides;
+        // popped out, wherever its title row was dragged, kept on screen.
+        poppedOut: settings.values.cardPopped
+        x: poppedOut ? Math.max(0, Math.min(parent.width - width, settings.values.cardX * parent.width - width / 2))
+                     : parent.width - width - Style.space(20)
+        y: poppedOut ? Math.max(0, Math.min(parent.height - height, settings.values.cardY * parent.height - height / 2))
+                     : (parent.height - height) / 2
+        property point dragFrom
+        onPopToggled: {
+          // Pops out a little in from where it was docked, so the move shows.
+          if (!poppedOut) {
+            settings.preview("cardX", (x - Style.space(60) + width / 2) / parent.width)
+            settings.preview("cardY", (y + height / 2) / parent.height)
+          }
+          settings.set("cardPopped", !poppedOut)
+        }
+        onDragStarted: dragFrom = Qt.point(x, y)
+        onDragMoved: function(dx, dy) {
+          settings.preview("cardX", (dragFrom.x + dx + width / 2) / parent.width)
+          settings.preview("cardY", (dragFrom.y + dy + height / 2) / parent.height)
+        }
+        onDragFinished: settings.save()
         store: settings
         catalog: strings
         ink: root.ink

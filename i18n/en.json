@@ -118,5 +118,9 @@
   "search.quip5": "Seek and ye shall find",
   "search.quip6": "Psst… just start typing",
   "search.quip7": "Your apps miss you",
-  "search.quip8": "Summon an app"
+  "search.quip8": "Summon an app",
+  "settings.prompt.confused": "Confused face",
+  "settings.prompt.custom": "Custom",
+  "settings.prompt.customHint": "Type your own placeholder",
+  "search.thinking": "Hmm…"
 }

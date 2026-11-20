@@ -57,14 +57,21 @@ Item {
     searchArrange: { value: false },
     // Whether the bar widens once something is typed.
     searchGrow: { value: true },
-    // What the empty bar says: the word, rotating lines, or
+    // What the empty bar says: the word, rotating lines, a confused face, your own words, or
     // the yellow LCD's easter egg.
-    searchPrompt: { value: "plain", options: ["plain", "quips", "pika"] },
+    searchPrompt: { value: "plain", options: ["plain", "quips", "confused", "custom", "pika"] },
+    // The words the "custom" placeholder shows, up to 60 characters.
+    searchCustom: { value: "", maxLength: 60 },
     // Where the bar sits: a preset, or "custom" at searchX / searchY (the
     // bar's centre as a fraction of the screen), set by dragging it.
     searchPlace: { value: "top", options: ["top", "center", "bottom", "custom"] },
     searchX: { value: 0.5, min: 0, max: 1 },
     searchY: { value: 0.06, min: 0, max: 1 },
+    // Whether the settings card floats, and where: its centre as a fraction
+    // of the screen.
+    cardPopped: { value: false },
+    cardX: { value: 0.5, min: 0, max: 1 },
+    cardY: { value: 0.5, min: 0, max: 1 },
     // Whether the sort box shows beside the search bar, and the order chosen.
     sortBox: { value: false },
     sortBy: { value: "alpha", options: ["alpha", "used"] }
@@ -115,6 +122,7 @@ Item {
   readonly property bool searchArrange: values.searchArrange
   readonly property bool searchGrow: values.searchGrow
   readonly property string searchPrompt: values.searchPrompt
+  readonly property string searchCustom: values.searchCustom
   // The easter egg plays only on the yellow (amber) LCD, and only when its
   // clip is in easter/ beside the plugin; the clip is not part of the repo.
   readonly property url pikaSource: Qt.resolvedUrl("easter/pika.mp4")
@@ -141,6 +149,7 @@ Item {
       var value = stored ? stored[key] : undefined
       if (typeof value !== typeof rule.value || (typeof value === "number" && !isFinite(value))) value = rule.value
       if (rule.options && rule.options.indexOf(value) === -1) value = rule.value
+      if (typeof value === "string" && rule.maxLength) value = value.slice(0, rule.maxLength)
       if (typeof value === "number") {
         value = Math.max(rule.min, Math.min(rule.max, value))
         if (Math.round(rule.value) === rule.value) value = Math.round(value)
