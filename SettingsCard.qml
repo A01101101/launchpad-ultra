@@ -400,12 +400,22 @@ Rectangle {
         width: parent.width
         spacing: Style.spacing.xxl
 
+        SettingSwitch { label: card.catalog.t("settings.searchArrange"); key: "searchArrange" }
         Label {
+          visible: card.store.searchArrange
           width: parent.width
           wrapMode: Text.WordWrap
           elide: Text.ElideNone
           opacity: 0.7
           text: card.catalog.t("settings.searchHint")
+        }
+        SettingSwitch { label: card.catalog.t("settings.searchGrow"); key: "searchGrow" }
+        ChipChoice {
+          label: card.catalog.t("settings.searchPrompt")
+          key: "searchPrompt"
+          options: [card.option("plain", "settings.prompt.plain"), card.option("quips", "settings.prompt.quips"),
+                    card.option("thinker", "settings.prompt.thinker")]
+                   .concat(card.store.pikaOffered ? [card.option("pika", "settings.prompt.pika")] : [])
         }
         ChipChoice {
           visible: !card.lcd

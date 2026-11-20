@@ -53,6 +53,14 @@ Item {
     searchUnderline: { value: true },
     searchCaret: { value: "line", options: ["line", "block", "underscore"] },
     searchBlink: { value: true },
+    // Off, the bar stays put while the card is open; on, it can be dragged to
+    // move and resized by its corner.
+    searchArrange: { value: false },
+    // Whether the bar widens once something is typed.
+    searchGrow: { value: true },
+    // What the empty bar says: the word, rotating lines, a head scratcher, or
+    // the yellow LCD's easter egg.
+    searchPrompt: { value: "plain", options: ["plain", "quips", "thinker", "pika"] },
     // Where the bar sits: a preset, or "custom" at searchX / searchY (the
     // bar's centre as a fraction of the screen), set by dragging it.
     searchPlace: { value: "top", options: ["top", "center", "bottom", "custom"] },
@@ -107,6 +115,15 @@ Item {
   readonly property bool searchUnderline: values.searchUnderline
   readonly property string searchCaret: values.searchCaret
   readonly property bool searchBlink: values.searchBlink
+  readonly property bool searchArrange: values.searchArrange
+  readonly property bool searchGrow: values.searchGrow
+  readonly property string searchPrompt: values.searchPrompt
+  // The easter egg plays only on the yellow (amber) LCD, and only when its
+  // clip is in easter/ beside the plugin; the clip is not part of the repo.
+  readonly property url pikaSource: Qt.resolvedUrl("easter/pika.mp4")
+  property bool pikaAvailable: false
+  readonly property bool pikaOffered: pikaAvailable && theme === "lcd" && lcdTint === "amber"
+  readonly property string searchPromptShown: searchPrompt === "pika" && !pikaOffered ? "plain" : searchPrompt
   readonly property string searchPlace: values.searchPlace
   readonly property real searchX: values.searchX
   readonly property real searchY: values.searchY
@@ -166,6 +183,13 @@ Item {
   function reset() {
     values = withDefaults({})
     save()
+  }
+
+  FileView {
+    path: String(root.pikaSource).replace(/^file:\/\//, "")
+    printErrors: false
+    onLoaded: root.pikaAvailable = true
+    onLoadFailed: root.pikaAvailable = false
   }
 
   FileView {

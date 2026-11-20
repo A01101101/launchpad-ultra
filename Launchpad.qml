@@ -401,8 +401,9 @@ Item {
       Timer { id: wheelPause; interval: 320 }
 
       // ---- Search pill -------------------------------------------------------
-      // Its look, caret, size and place all come from the settings. While the
-      // settings card is open it can be dragged to move and resized by its corner.
+      // Its look, caret, size and place all come from the settings. With the
+      // card open and "Move and resize" switched on, it can be dragged to move
+      // and resized by its corner.
       Rectangle {
         id: searchPill
         readonly property bool filled: searchInput.text !== ""
@@ -451,7 +452,7 @@ Item {
         readonly property real fit: Math.max(0.35, Math.min(root.searchScale,
                                                             2 * roomX / Style.space(440),
                                                             2 * roomY / Style.space(38)))
-        width: Math.round(Style.space(filled ? 440 : 340) * searchPill.fit)
+        width: Math.round(Style.space(filled && settings.searchGrow ? 440 : 340) * searchPill.fit)
         height: Math.round(Style.space(38) * searchPill.fit)
         // A preset, or wherever it was dragged to.
         x: settings.searchPlace === "custom"
@@ -604,21 +605,23 @@ Item {
           opacity: settings.glassTint === "ink" || root.lcd ? 0.7 : 1
         }
 
-        Text {
-          textFormat: Text.PlainText
+        // The word, rotating lines, the head scratcher, or the yellow LCD's
+        // easter egg, as the settings pick.
+        SearchPrompt {
           anchors.fill: searchInput
           anchors.leftMargin: caret.width + 3
-          verticalAlignment: Text.AlignVCenter
-          text: searchPill.lcd ? strings.t("search.placeholder").toUpperCase() : strings.t("search.placeholder")
-          color: Util.alpha(searchPill.pillInk, 0.6)
-          font.family: searchPill.face
-          font.bold: searchPill.headline
-          font.italic: searchPill.hairline || searchPill.band
-          font.weight: searchPill.hairline ? Font.Light : searchPill.headline ? Font.Bold : Font.Normal
-          font.capitalization: searchPill.headline ? Font.AllUppercase : Font.MixedCase
-          font.pixelSize: searchPill.fontPx
-          elide: Text.ElideRight
           visible: !searchPill.filled
+          mode: settings.searchPromptShown
+          catalog: strings
+          pikaSource: settings.pikaSource
+          upper: searchPill.lcd
+          ink: Util.alpha(searchPill.pillInk, 0.6)
+          family: searchPill.face
+          bold: searchPill.headline
+          italic: searchPill.hairline || searchPill.band
+          weight: searchPill.hairline ? Font.Light : searchPill.headline ? Font.Bold : Font.Normal
+          capitalization: searchPill.headline ? Font.AllUppercase : Font.MixedCase
+          pixelSize: searchPill.fontPx
         }
 
         // Always focused, so typing anywhere searches.
@@ -744,9 +747,9 @@ Item {
           }
         }
 
-        // ---- Edit mode: while the settings card is open ---------------------
+        // ---- Edit mode: with the card open and Move and resize switched on ---------------------
         Rectangle {
-          visible: root.settingsOpen
+          visible: root.settingsOpen && settings.searchArrange
           anchors.fill: parent
           anchors.margins: -Style.space(5)
           radius: searchPill.radius > 0 ? searchPill.radius + Style.space(5) : 0
@@ -757,8 +760,8 @@ Item {
         // Drag anywhere on the bar to move it.
         MouseArea {
           id: moveArea
-          visible: root.settingsOpen
-          enabled: root.settingsOpen
+          visible: root.settingsOpen && settings.searchArrange
+          enabled: root.settingsOpen && settings.searchArrange
           anchors.fill: parent
           cursorShape: Qt.SizeAllCursor
           property point grab
@@ -784,7 +787,7 @@ Item {
         }
         // Drag the corner to resize it.
         Rectangle {
-          visible: root.settingsOpen
+          visible: root.settingsOpen && settings.searchArrange
           width: Style.space(12)
           height: width
           radius: 2
