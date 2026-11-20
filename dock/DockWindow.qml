@@ -199,17 +199,26 @@ PanelWindow {
   exclusionMode: ExclusionMode.Normal
   exclusiveZone: 0
 
+  // The surface spans its screen, clear past the icons, the way the bar's
+  // does, and a drag only toggles its input region. While the dock is being
+  // moved or an app slid along it, the whole surface takes input, so the
+  // pointer never leaves the dock however far it goes: a pointer that strays
+  // onto another surface is pulled off mid-drag by Hyprland, ending the
+  // gesture with a synthesized release. Growing the surface for the drag
+  // instead would flash a stale, stretched frame.
   anchors {
-    top: window.position !== "bottom"
-    bottom: window.position !== "top"
-    left: window.position !== "right"
-    right: window.position !== "left"
+    top: true
+    bottom: true
+    left: true
+    right: true
   }
 
-  implicitWidth: window.vertical ? window.gap + window.slotSize + window.popupRoom : 0
-  implicitHeight: window.vertical ? 0 : window.gap + window.slotSize + window.popupRoom
+  readonly property bool gestureActive: window.dragging || (!!window.dock && window.dock.moveActive && !!window.dock.moveScreen && window.dock.moveScreen.name === window.screen.name)
 
-  mask: Region {
+  mask: window.gestureActive ? null : idleMask
+
+  Region {
+    id: idleMask
     item: window.contentShown ? body : null
 
     Region { item: window.shown && window.autohide ? edgeTrigger : null }
