@@ -20,6 +20,11 @@ Item {
 
   property bool opened: false
   property bool settingsOpen: false
+  // Whether the search bar can be dragged and resized. It is not saved: it
+  // starts off each time the settings open, so a click meant for a setting
+  // never moves the bar.
+  property bool arrangeSearch: false
+  onSettingsOpenChanged: arrangeSearch = false
   property var apps: []
   property int page: 0
   // The page last browsed without a search, for the "remember page" setting.
@@ -440,7 +445,7 @@ Item {
         readonly property real fontPx: headline ? Math.round(height * 0.78)
                                        : Math.round(Style.font.title * searchPill.fit * (win98 ? 0.92 : frame ? 1.1 : 1))
         // How far a brutal bar has pressed into its shadow.
-        readonly property real press: brutal && filled ? Math.round(Style.space(3) * fit) : 0
+        readonly property real press: brutal && filled && !settings.searchCalm ? Math.round(Style.space(3) * fit) : 0
         Behavior on press { NumberAnimation { duration: Style.duration(120); easing.type: Easing.OutCubic } }
         readonly property real ringWidth: Math.max(2, settings.searchBorder)
         // The room the paper look's label takes above the field.
@@ -462,9 +467,9 @@ Item {
                                        ? Math.min(settings.searchY, 1 - settings.searchY) * parent.height
                                        : parent.height / 2) - fitMargin
         readonly property real fit: Math.max(0.35, Math.min(root.searchScale,
-                                                            2 * roomX / Style.space(440),
+                                                            2 * roomX / Style.space(340),
                                                             2 * roomY / Style.space(38)))
-        width: Math.round(Style.space(filled && settings.searchGrow ? 440 : 340) * searchPill.fit)
+        width: Math.round(Style.space(340) * searchPill.fit)
         height: Math.round(Style.space(38) * searchPill.fit)
         // A preset, or wherever it was dragged to.
         x: settings.searchPlace === "custom"
@@ -557,7 +562,7 @@ Item {
         Item {
           id: frameCorners
           visible: searchPill.frame
-          readonly property real reach: searchPill.filled ? 0 : Math.round(Style.space(6) * searchPill.fit)
+          readonly property real reach: searchPill.filled && !settings.searchCalm ? 0 : Math.round(Style.space(6) * searchPill.fit)
           readonly property real arm: Math.round(searchPill.height * 0.34)
           readonly property real line: searchPill.ringWidth
           readonly property color tone: root.inkAlpha(searchPill.filled ? 0.95 : 0.55)
@@ -595,7 +600,7 @@ Item {
           property real angle: 0
 
           NumberAnimation on angle {
-            running: auroraRing.visible && searchPill.filled && !Style.reduceMotion
+            running: auroraRing.visible && searchPill.filled && !settings.searchCalm && !Style.reduceMotion
             from: auroraRing.angle
             to: auroraRing.angle + 360
             duration: Style.duration(6000)
@@ -704,6 +709,7 @@ Item {
           catalog: strings
           pikaSource: settings.pikaSource
           customText: settings.searchCustom
+          calm: settings.searchCalm
           upper: searchPill.lcd
           ink: Util.alpha(searchPill.pillInk, 0.6)
           family: searchPill.face
@@ -839,7 +845,7 @@ Item {
 
         // ---- Edit mode: with the card open and Move and resize switched on ---------------------
         Rectangle {
-          visible: root.settingsOpen && settings.searchArrange
+          visible: root.settingsOpen && root.arrangeSearch
           anchors.fill: parent
           anchors.margins: -Style.space(5)
           radius: searchPill.radius > 0 ? searchPill.radius + Style.space(5) : 0
@@ -850,8 +856,8 @@ Item {
         // Drag anywhere on the bar to move it.
         MouseArea {
           id: moveArea
-          visible: root.settingsOpen && settings.searchArrange
-          enabled: root.settingsOpen && settings.searchArrange
+          visible: root.settingsOpen && root.arrangeSearch
+          enabled: root.settingsOpen && root.arrangeSearch
           anchors.fill: parent
           cursorShape: Qt.SizeAllCursor
           property point grab
@@ -877,7 +883,7 @@ Item {
         }
         // Drag the corner to resize it.
         Rectangle {
-          visible: root.settingsOpen && settings.searchArrange
+          visible: root.settingsOpen && root.arrangeSearch
           width: Style.space(12)
           height: width
           radius: 2
@@ -1554,6 +1560,8 @@ Item {
         onDragFinished: settings.save()
         store: settings
         catalog: strings
+        arrange: root.arrangeSearch
+        onArrangeToggled: function(on) { root.arrangeSearch = on }
         ink: root.ink
         shade: root.shade
         lcd: root.lcd

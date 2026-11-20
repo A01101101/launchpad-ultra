@@ -103,7 +103,6 @@
   "search.empty.7": "You keep typing that. I do not think it means what you think it means.",
   "search.empty.8": "Bold of you to assume you installed that.",
   "settings.searchArrange": "Move and resize by dragging",
-  "settings.searchGrow": "Widen while typing",
   "settings.searchPrompt": "Placeholder",
   "settings.prompt.plain": "Search",
   "settings.prompt.quips": "Funny lines",
@@ -123,5 +122,6 @@
   "settings.emptyClick.pageHint": "Double-click empty space to close Launchpad.",
   "settings.searchLook.frame": "Frame",
   "settings.searchLook.brutal": "Brutal",
-  "settings.searchLook.aurora": "Aurora"
+  "settings.searchLook.aurora": "Aurora",
+  "settings.searchCalm": "Reduce movement"
 }

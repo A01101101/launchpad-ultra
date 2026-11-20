@@ -51,11 +51,9 @@ Item {
     searchUnderline: { value: true },
     searchCaret: { value: "line", options: ["line", "block", "underscore"] },
     searchBlink: { value: true },
-    // Off, the bar stays put while the card is open; on, it can be dragged to
-    // move and resized by its corner.
-    searchArrange: { value: false },
-    // Whether the bar widens once something is typed.
-    searchGrow: { value: true },
+    // Holds the search bar and its placeholder still: no corners closing in,
+    // no press, no turning ring, no fading lines or bobbing marks.
+    searchCalm: { value: false },
     // What the empty bar says: the word, rotating lines, a confused face, your own words, or
     // the yellow LCD's easter egg.
     searchPrompt: { value: "plain", options: ["plain", "quips", "confused", "custom", "pika"] },
@@ -118,8 +116,7 @@ Item {
   readonly property bool searchUnderline: values.searchUnderline
   readonly property string searchCaret: values.searchCaret
   readonly property bool searchBlink: values.searchBlink
-  readonly property bool searchArrange: values.searchArrange
-  readonly property bool searchGrow: values.searchGrow
+  readonly property bool searchCalm: values.searchCalm
   readonly property string searchPrompt: values.searchPrompt
   readonly property string searchCustom: values.searchCustom
   // The easter egg plays only on the yellow (amber) LCD, and only when its

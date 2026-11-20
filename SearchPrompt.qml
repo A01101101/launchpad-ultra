@@ -23,6 +23,9 @@ Item {
   property url pikaSource
   // The user's own words, for the "custom" mode.
   property string customText: ""
+  // Reduce movement: everything holds still.
+  property bool calm: false
+  readonly property bool still: calm || Style.reduceMotion
 
   readonly property var quipKeys: ["search.quip1", "search.quip2", "search.quip3", "search.quip4",
                                    "search.quip5", "search.quip6", "search.quip7", "search.quip8"]
@@ -41,7 +44,7 @@ Item {
     repeat: true
     interval: 3200
     onTriggered: {
-      if (Style.reduceMotion) prompt.quip = (prompt.quip + 1) % prompt.quipKeys.length
+      if (prompt.still) prompt.quip = (prompt.quip + 1) % prompt.quipKeys.length
       else swap.restart()
     }
   }
@@ -63,7 +66,7 @@ Item {
       id: face
       visible: prompt.mode === "confused"
       readonly property real d: Math.round(prompt.pixelSize * 1.15)
-      readonly property bool moving: visible && prompt.visible && !Style.reduceMotion
+      readonly property bool moving: visible && prompt.visible && !prompt.still
       width: d * 1.6
       height: d
       anchors.verticalCenter: parent.verticalCenter

@@ -18,6 +18,10 @@ Rectangle {
   // The most height the card may take.
   property real maxHeight: 600
   signal closeRequested()
+  // Whether the search bar can be dragged and resized; Launchpad holds it
+  // and turns it off whenever the settings open.
+  property bool arrange: false
+  signal arrangeToggled(bool on)
   // Popped out, the card floats wherever it is dragged by its title row;
   // docked, it sits down the side of the screen.
   property bool poppedOut: false
@@ -485,16 +489,20 @@ Rectangle {
         width: parent.width
         spacing: Style.spacing.xxl
 
-        SettingSwitch { label: card.catalog.t("settings.searchArrange"); key: "searchArrange" }
+        SwitchRow {
+          label: card.catalog.t("settings.searchArrange")
+          checked: card.arrange
+          onToggled: function(on) { card.arrangeToggled(on) }
+        }
         Label {
-          visible: card.store.searchArrange
+          visible: card.arrange
           width: parent.width
           wrapMode: Text.WordWrap
           elide: Text.ElideNone
           opacity: 0.7
           text: card.catalog.t("settings.searchHint")
         }
-        SettingSwitch { label: card.catalog.t("settings.searchGrow"); key: "searchGrow" }
+        SettingSwitch { label: card.catalog.t("settings.searchCalm"); key: "searchCalm" }
         ChipChoice {
           label: card.catalog.t("settings.searchPrompt")
           key: "searchPrompt"
