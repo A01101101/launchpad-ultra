@@ -42,8 +42,9 @@ Item {
     lcdShadow: { value: 3, min: 0, max: 12 },
     // The search bar's look, caret, and underline (for the plain look).
     // Past the first three: viewfinder corners, giant capitals over a rule,
-    // a neo-brutalist block, labelled paper, and a glowing aurora ring.
-    searchLook: { value: "glass", options: ["glass", "plain", "win98", "frame", "headline", "brutal", "paper", "aurora"] },
+    // a neo-brutalist block, and a glowing aurora ring. A saved "paper" look,
+    // since removed, falls back to glass.
+    searchLook: { value: "glass", options: ["glass", "plain", "win98", "frame", "headline", "brutal", "aurora"] },
     // The looking glass in the search bar: its drawing, color and size in
     // percent.
     glassStyle: { value: "classic", options: ["classic", "fine", "bold", "filled", "square", "pixel", "arrow", "dot", "off"] },

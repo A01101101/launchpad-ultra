@@ -435,12 +435,10 @@ Item {
         // Neo-brutalist: an accent block, a heavy black outline and a hard
         // offset shadow it presses into while searching.
         readonly property bool brutal: look === "brutal"
-        // A sheet of warm paper with a small label above it.
-        readonly property bool paper: look === "paper"
         // A dark pill inside a glowing ring of the accent's neighbouring hues,
         // which turns slowly while searching.
         readonly property bool aurora: look === "aurora"
-        readonly property color pillInk: win98 ? "#000000" : paper ? "#1d1b16" : brutal ? "#111111" : aurora ? "#f2f2f5" : root.ink
+        readonly property color pillInk: win98 ? "#000000" : brutal ? "#111111" : aurora ? "#f2f2f5" : root.ink
         readonly property string face: lcd ? "monospace" : win98 ? "Tahoma" : frame ? "Noto Serif" : Style.font.family
         readonly property real fontPx: headline ? Math.round(height * 0.78)
                                        : Math.round(Style.font.title * searchPill.fit * (win98 ? 0.92 : frame ? 1.1 : 1))
@@ -448,8 +446,6 @@ Item {
         readonly property real press: brutal && filled && !settings.searchCalm ? Math.round(Style.space(3) * fit) : 0
         Behavior on press { NumberAnimation { duration: Style.duration(120); easing.type: Easing.OutCubic } }
         readonly property real ringWidth: Math.max(2, settings.searchBorder)
-        // The room the paper look's label takes above the field.
-        readonly property real headRoom: paper ? Math.round(Style.space(20) * Math.max(0.8, Math.min(1.5, fit))) : 0
         // The looking glass's color.
         readonly property color glassInk: pillInk
         readonly property bool lit: filled || searchInput.activeFocus
@@ -476,19 +472,17 @@ Item {
            ? Math.max(0, Math.min(parent.width - width, settings.searchX * parent.width - width / 2))
            : viewport.x + (viewport.width - width) / 2
         y: settings.searchPlace === "custom"
-           ? Math.max(headRoom, Math.min(parent.height - height, settings.searchY * parent.height - height / 2))
+           ? Math.max(0, Math.min(parent.height - height, settings.searchY * parent.height - height / 2))
            : settings.searchPlace === "center" ? (parent.height - height) / 2
            : settings.searchPlace === "bottom" ? parent.height - Style.space(96) - height
-           : Style.space(36) + headRoom
+           : Style.space(36)
         radius: lcd ? Math.round(Style.space(3) * searchPill.fit)
-                : paper ? Math.round(Style.space(5) * searchPill.fit)
                 : (look === "glass" || aurora) ? height / 2
                 : brutal ? Math.round(Style.space(4) * searchPill.fit)
                 : 0
         color: lcd ? Util.alpha(root.ink, lit ? 0.12 : 0.06)
                : look === "glass" ? root.inkAlpha(filled ? 0.22 : 0.13)
                : brutal ? Commons.Color.accent
-               : paper ? "#ece8dd"
                : "transparent"
         border.width: (look === "glass" || lcd) ? settings.searchBorder
                       : brutal ? Math.max(2, Math.round(Style.space(2) * fit))
@@ -645,23 +639,6 @@ Item {
             radius: height / 2
             color: Qt.rgba(0.07, 0.07, 0.09, 0.94)
           }
-        }
-
-        // Paper: a small spaced-out label above the sheet.
-        Text {
-          visible: searchPill.paper
-          textFormat: Text.PlainText
-          x: Style.space(2)
-          y: -searchPill.headRoom
-          width: parent.width
-          height: searchPill.headRoom
-          verticalAlignment: Text.AlignVCenter
-          elide: Text.ElideRight
-          text: strings.t("search.prompt").toUpperCase()
-          color: root.inkAlpha(0.75)
-          font.family: Style.font.family
-          font.letterSpacing: 1.5
-          font.pixelSize: Math.round(searchPill.headRoom * 0.52)
         }
 
         Behavior on width {
@@ -1012,8 +989,8 @@ Item {
         // The grid keeps its place wherever the search bar is dragged to.
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        anchors.topMargin: settings.searchPlace === "top" ? searchPill.height + searchPill.headRoom + Style.space(52) : Style.space(60)
-        anchors.bottomMargin: Style.space(78) + (settings.searchPlace === "bottom" ? searchPill.height + searchPill.headRoom + Style.space(20) : 0)
+        anchors.topMargin: settings.searchPlace === "top" ? searchPill.height + Style.space(52) : Style.space(60)
+        anchors.bottomMargin: Style.space(78) + (settings.searchPlace === "bottom" ? searchPill.height + Style.space(20) : 0)
         // Centered in what the settings card leaves free. Placed by x so it
         // stays clear of the card in a right-to-left layout too.
         x: Math.round((parent.width - panel.reserve - width) / 2)

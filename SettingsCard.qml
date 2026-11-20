@@ -530,7 +530,7 @@ Rectangle {
           options: [card.option("glass", "settings.searchLook.glass"), card.option("plain", "settings.searchLook.plain"),
                     card.option("win98", "settings.searchLook.win98"), card.option("frame", "settings.searchLook.frame"),
                     card.option("headline", "settings.searchLook.headline"), card.option("brutal", "settings.searchLook.brutal"),
-                    card.option("paper", "settings.searchLook.paper"), card.option("aurora", "settings.searchLook.aurora")]
+                    card.option("aurora", "settings.searchLook.aurora")]
         }
         Label {
           visible: card.lcd

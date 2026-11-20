@@ -43,8 +43,9 @@ Or click the apps button on the dock (the dock shows on floating workspaces).
 
 Right-click the dock's apps button and pick **Launchpad settings**, or
 right-click the search bar. Four tabs: Grid, Pages, Search, Theme. While the
-card is open, drag the search bar to move it and drag its corner to resize it. The grid behind the card redraws as
-you change things.
+card is open, turn on **Drag to move and resize** on the Search tab to drag the
+search bar around and drag its corner to resize it. The grid behind the card
+redraws as you change things.
 
 | Setting | Range | Default |
 |---|---|---|
@@ -52,33 +53,36 @@ you change things.
 | Rows | 2 to 6 | 4 |
 | Icon size | 56 to 128 | 86 |
 | Show app names | on / off | on |
-| Screen | Glass / LCD (the whole screen turns green, with pixel icons) | Glass |
+| Style | Frosted / LCD (the whole screen turns green, with pixel icons) | Frosted |
 | LCD tint | Green / Amber / Blue / Grey / Violet / Paper / Night (dark screen, light ink) | Green |
-| LCD shadow depth | None to 12 | 3 |
+| Pixel shadow (LCD) | None to 12 | 3 |
 | Backdrop darkness | 31% to 90% | 34% |
-| Use theme colors | on / off | off (dark glass, white text) |
+| Use theme colors | on / off | off (dark frosted glass, white text) |
 | Settings button | on / off (the corner cog; off, open settings from the dock menu or by right-clicking the search bar) | off |
 | Reopen on the last page | on / off | off |
 | Scrolling | Pages / Smooth (one long grid that scrolls) | Pages |
 | Scroll sensitivity | 1 to 5 | 3 |
-| Next page comes from | Right / Left / Below / Above | Right |
+| Pages slide in from | Right / Left / Bottom / Top | Right |
 | Page indicator | Pill / Dots / Numbers / Off | Pill |
 | Page arrows | Round / Plain / Edge / Off | Round |
 | Click on empty space | Close / Turn page (then double-click closes) | Close |
-| Search look | Glass / Plain / Win98 / Frame (viewfinder corners that close in as you type) / Headline (giant capitals over a rule) / Brutal (accent block, black outline, hard shadow it presses into) / Paper (labelled sheet) / Aurora (dark pill in a glowing ring that turns while you search) | Glass |
-| Looking glass style | Classic / Fine / Bold / Filled / Square / Pixel / Arrow / Dot / Off | Classic |
-| Looking glass size | 60% to 200% | 100% |
+| Search look | Frosted / Plain / Retro (Windows 98) / Corners (viewfinder corners that close in as you type) / Big text (giant capitals over a rule) / Block (accent block, black outline, hard shadow it presses into) / Glow (dark pill in a glowing ring that turns while you search) | Frosted |
+| Search icon style | Classic / Fine / Bold / Filled / Square / Pixel / Arrow / Dot / Off | Classic |
+| Search icon size | 60% to 200% | 100% |
 | Search underline | on / off (Plain look) | on |
 | Search cursor | Line / Block / Underscore | Line |
 | Blinking cursor | on / off | on |
 | Search position | Top / Middle / Bottom / Custom | Top |
 | Search bar size | 60% to 240% | 100% |
-| Search bar border | None to 6 (Glass, Hairline, Split and LCD) | 1 |
-| Show sort box | on / off | off |
+| Search bar border | None to 6 (Frosted, Glow and LCD) | 1 |
+| Placeholder | Search / Rotating hints / Confused face / Custom | Search |
+| Drag to move and resize | on / off (starts off each time settings open) | off |
+| Keep search bar still | on / off (no animation in the bar or placeholder) | off |
+| Sort button | on / off | off |
 | Sort apps by | A–Z / Most used | A–Z |
 | Dock icon size | 24 to 64 (in `launchpad.json` only) | 36 |
 
-The sort box sits beside the search bar. "Most used" counts how often each app
+The sort button sits beside the search bar. "Most used" counts how often each app
 is opened from Launchpad or its dock, kept in
 `~/.local/state/omarchy/launchpad-usage.json`; apps opened any other way are
 not counted. A search always shows the best matches first.
