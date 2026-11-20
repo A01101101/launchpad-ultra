@@ -11,7 +11,9 @@ Omarchy launcher.
 It also brings its own dock: Omarchy's dock, with the apps button opening
 Launchpad, a **Launchpad settings** row in its right-click menu, an icon size
 setting, and hold-to-move like the bar: hold any icon, or hold or drag the apps button, and the dock follows
-the pointer to the nearest screen edge, the way the bar moves. Enabling the plugin switches the built-in dock off; removing the plugin
+the pointer to the nearest screen edge, the way the bar moves. Drag an icon
+along the dock to reorder it, or pull a kept app off the dock and let go to
+remove it; drag an app from Launchpad onto the dock to add it. Enabling the plugin switches the built-in dock off; removing the plugin
 brings it back. `omarchy dock` and the dock's settings in `shell.json` keep
 working as before.
 

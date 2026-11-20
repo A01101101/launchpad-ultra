@@ -69,7 +69,16 @@ PanelWindow {
   property int dragIndex: -1
   property int dropIndex: -1
   property real dragOffset: 0
+  // How far the dragged app has been pulled across the dock, toward or away
+  // from its edge. The icon follows the pointer both ways, like a dragged bar
+  // widget.
+  property real dragCross: 0
   readonly property bool dragging: dragIndex >= 0
+  // True once a kept app has been pulled far enough off the dock that letting
+  // go takes it out, the way a widget dragged off the bar is removed. Its
+  // room closes meanwhile, as though it were gone already.
+  property bool removeArmed: false
+  readonly property real removeDistance: window.slotSize * 0.75 + Style.spaceReal(24)
   // Off while a drop resets the slots: they snap to where the reorder puts
   // them rather than sliding back from where they stepped aside. Set before
   // the drag state changes, so the slots never see the reset animated.
@@ -163,6 +172,8 @@ PanelWindow {
     window.dragIndex = -1
     window.dropIndex = -1
     window.dragOffset = 0
+    window.dragCross = 0
+    window.removeArmed = false
   }
 
   function closeMenu() {
@@ -539,8 +550,9 @@ PanelWindow {
       var delta = window.vertical ? point.y - appSlot.pressPoint.y : point.x - appSlot.pressPoint.x
       // A press that wanders is a drag in the making, not a click.
       if (Math.hypot(point.x - appSlot.pressPoint.x, point.y - appSlot.pressPoint.y) > Style.space(4)) appSlot.dragged = true
+      var cross = window.vertical ? point.x - appSlot.pressPoint.x : point.y - appSlot.pressPoint.y
       if (!window.dragging) {
-        if (Math.abs(delta) < Style.space(6)) return
+        if (Math.hypot(delta, cross) < Style.space(6)) return
         window.closeMenu()
         // The landing slot first: with the dragged slot set and no landing
         // slot yet, every slot before it would count as in between and step
@@ -550,7 +562,12 @@ PanelWindow {
       }
       if (!appSlot.lifted) return
       window.dragOffset = delta
-      window.dropIndex = DockModel.dropIndex(appSlot.index, delta, window.slotSize, appRepeater.count)
+      window.dragCross = cross
+      // Only a kept app can be taken out; a running one that is not kept
+      // stays while its windows do, so pulling it off does nothing.
+      window.removeArmed = !!appSlot.modelData && appSlot.modelData.pinned && Math.abs(cross) >= window.removeDistance
+      window.dropIndex = window.removeArmed ? appRepeater.count - 1
+        : DockModel.dropIndex(appSlot.index, delta, window.slotSize, appRepeater.count)
     }
 
     mouse.onReleased: function(event) {
@@ -564,9 +581,11 @@ PanelWindow {
       window.dropPoint = appSlot.mapToItem(body, event.x, event.y)
       var from = window.dragIndex
       var to = window.dropIndex
+      var remove = window.removeArmed
       appSlot.dragged = true
       window.endDrag()
-      window.dock.moveItem(from, to)
+      if (remove) window.dock.setPinned(appSlot.key, false)
+      else window.dock.moveItem(from, to)
     }
 
     mouse.onCanceled: {
@@ -605,12 +624,14 @@ PanelWindow {
       asynchronous: true
       smooth: true
       mipmap: true
-      opacity: appSlot.launching ? appSlot.pulse : (appSlot.windowCount > 0 ? 1 : window.idleOpacity)
+      opacity: (appSlot.lifted && window.removeArmed ? 0.55 : 1) * (appSlot.launching ? appSlot.pulse : (appSlot.windowCount > 0 ? 1 : window.idleOpacity))
       transform: Translate {
-        x: window.vertical ? 0 : appSlot.displayedShift
-        y: window.vertical ? appSlot.displayedShift : 0
+        x: window.vertical ? (appSlot.lifted ? window.dragCross : 0) : appSlot.displayedShift
+        y: window.vertical ? appSlot.displayedShift : (appSlot.lifted ? window.dragCross : 0)
       }
-      scale: appSlot.lifted || appSlot.hovered ? 1.15 : 1
+      scale: appSlot.lifted && window.removeArmed ? 0.82 : appSlot.lifted || appSlot.hovered ? 1.15 : 1
+
+      Behavior on opacity { NumberAnimation { duration: Style.duration(120); easing.type: Easing.OutCubic } }
       transformOrigin: window.popOrigin
 
       Behavior on scale { NumberAnimation { duration: Style.duration(120); easing.type: Easing.OutCubic } }
