@@ -247,16 +247,19 @@ PanelWindow {
     }
   }
 
-  // The strip along the screen edge that brings an auto-hidden dock back.
+  // The strip along the screen edge that brings an auto-hidden dock back. Like
+  // macOS, it runs the whole length of the edge, not just under the icons.
   Item {
     id: edgeTrigger
 
-    readonly property int depth: window.gap + Style.spacing.xxs
+    // Two pixels: the pointer stops at the screen's edge, so that is enough to
+    // hit, and it takes clicks from as little of the windows below as it can.
+    readonly property int depth: 2
 
-    x: window.position === "left" ? 0 : window.position === "right" ? window.width - depth : body.x
-    y: window.position === "top" ? 0 : window.position === "bottom" ? window.height - depth : body.y
-    width: window.vertical ? depth : body.width
-    height: window.vertical ? body.height : depth
+    x: window.position === "right" ? window.width - depth : 0
+    y: window.position === "bottom" ? window.height - depth : 0
+    width: window.vertical ? depth : window.width
+    height: window.vertical ? window.height : depth
 
     HoverHandler {
       id: edgeHover
@@ -496,7 +499,8 @@ PanelWindow {
     property point pressPoint
     property bool dragged: false
     readonly property int windowCount: modelData ? modelData.windows.length : 0
-    property real pulse: 1
+    // How far a launching app's icon has hopped off the dock, in pixels.
+    property real hop: 0
 
     // Slots between where the dragged app was and where it would land step
     // aside to make room; the dragged one follows the pointer.
@@ -612,9 +616,10 @@ PanelWindow {
       else window.dock.activate(appSlot.modelData)
     }
 
-    // Running apps are drawn in full, pinned ones that are not running faded,
-    // and one that is starting pulses between the two.
+    // Running apps are drawn in full and pinned ones that are not running
+    // faded. One that is starting bounces, like the macOS dock, in full.
     Image {
+      id: appIcon
       x: window.iconInset
       y: window.iconInset
       width: window.iconSize
@@ -625,10 +630,13 @@ PanelWindow {
       asynchronous: true
       smooth: true
       mipmap: true
-      opacity: (appSlot.lifted && window.removeArmed ? 0.55 : 1) * (appSlot.launching ? appSlot.pulse : (appSlot.windowCount > 0 ? 1 : window.idleOpacity))
+      opacity: (appSlot.lifted && window.removeArmed ? 0.55 : 1) * (appSlot.launching || appSlot.windowCount > 0 ? 1 : window.idleOpacity)
+      // The hop points away from the screen edge the dock sits on.
+      readonly property real hopX: window.position === "left" ? appSlot.hop : window.position === "right" ? -appSlot.hop : 0
+      readonly property real hopY: window.position === "top" ? appSlot.hop : window.position === "bottom" ? -appSlot.hop : 0
       transform: Translate {
-        x: window.vertical ? (appSlot.lifted ? window.dragCross : 0) : appSlot.displayedShift
-        y: window.vertical ? appSlot.displayedShift : (appSlot.lifted ? window.dragCross : 0)
+        x: (window.vertical ? (appSlot.lifted ? window.dragCross : 0) : appSlot.displayedShift) + appIcon.hopX
+        y: (window.vertical ? appSlot.displayedShift : (appSlot.lifted ? window.dragCross : 0)) + appIcon.hopY
       }
       scale: appSlot.lifted && window.removeArmed ? 0.82 : appSlot.lifted || appSlot.hovered ? 1.15 : 1
 
@@ -643,10 +651,13 @@ PanelWindow {
     SequentialAnimation {
       running: appSlot.launching && !Style.reduceMotion
       loops: Animation.Infinite
-      onRunningChanged: if (!running) appSlot.pulse = 1
+      onRunningChanged: if (!running) appSlot.hop = 0
 
-      NumberAnimation { target: appSlot; property: "pulse"; from: 1; to: window.idleOpacity; duration: Style.duration(500); easing.type: Easing.InOutSine }
-      NumberAnimation { target: appSlot; property: "pulse"; to: 1; duration: Style.duration(500); easing.type: Easing.InOutSine }
+      // Up quickly, slowing at the top, then back down to the dock, and a short
+      // rest on the dock before the next hop.
+      NumberAnimation { target: appSlot; property: "hop"; from: 0; to: Math.round(window.iconSize * 0.55); duration: Style.duration(260); easing.type: Easing.OutQuad }
+      NumberAnimation { target: appSlot; property: "hop"; to: 0; duration: Style.duration(260); easing.type: Easing.InOutQuad }
+      PauseAnimation { duration: Style.duration(120) }
     }
   }
 

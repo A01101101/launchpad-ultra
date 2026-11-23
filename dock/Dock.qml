@@ -156,7 +156,7 @@ Item {
     root.settleLaunches()
   }
 
-  // An app launched from the dock pulses its dot until a new window of it
+  // An app launched from the dock bounces until a new window of it
   // shows up, or for ten seconds if none does.
   property var launches: ({})
   readonly property int launchTimeout: 10000
