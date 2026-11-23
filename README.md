@@ -34,22 +34,33 @@ Update to the latest version, or remove it (which brings Omarchy's own dock
 back):
 
 ```bash
-omarchy plugin update launchpad
-omarchy plugin remove launchpad
+omarchy plugin update launchpad-ultra
+omarchy plugin remove launchpad-ultra
 ```
+
+Installed it back when its id was `launchpad`? Remove that
+one and add it again; your settings are kept:
+
+```bash
+omarchy plugin remove launchpad --yes
+omarchy plugin add https://github.com/A01101101/launchpad-ultra.git --enable
+```
+
+and change `panel = "launchpad"` to `panel = "launchpad-ultra"` in your key
+binding.
 
 ## Open it
 
 From a terminal or script:
 
 ```bash
-omarchy-shell shell toggle launchpad
+omarchy-shell shell toggle launchpad-ultra
 ```
 
 From a key, in `~/.config/hypr/bindings.lua`:
 
 ```lua
-o.bind("SUPER + ALT + SPACE", "Launchpad", { panel = "launchpad" })
+o.bind("SUPER + ALT + SPACE", "Launchpad", { panel = "launchpad-ultra" })
 ```
 
 Or click the apps button on the dock (the dock shows on floating workspaces).
@@ -112,9 +123,9 @@ They are saved in `~/.config/omarchy/launchpad.json`, which you can also edit
 by hand, and scripts can change them while the shell runs:
 
 ```bash
-omarchy-shell shell call launchpad configure '{"columns": 8, "rows": 3}'
-omarchy-shell shell summon launchpad '{"view": "settings"}'
-omarchy-shell shell summon launchpad '{"view": "settings", "tab": "search"}'
+omarchy-shell shell call launchpad-ultra configure '{"columns": 8, "rows": 3}'
+omarchy-shell shell summon launchpad-ultra '{"view": "settings"}'
+omarchy-shell shell summon launchpad-ultra '{"view": "settings", "tab": "search"}'
 ```
 
 ## Blur the desktop behind it

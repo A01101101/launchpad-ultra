@@ -260,7 +260,7 @@ Item {
     for (var i = 0; i < windows.length; i++) windows[i].toplevel.close()
   }
 
-  readonly property string pluginId: (manifest && manifest.id) || "launchpad"
+  readonly property string pluginId: (manifest && manifest.id) || "launchpad-ultra"
 
   // Launchpad's settings hold the dock's icon size and bounce.
   Launchpad.LauncherSettings { id: prefs }

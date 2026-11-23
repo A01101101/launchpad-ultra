@@ -139,7 +139,7 @@ Item {
   function dismiss() {
     close()
     if (shell && typeof shell.hide === "function")
-      shell.hide((manifest && manifest.id) || "launchpad")
+      shell.hide((manifest && manifest.id) || "launchpad-ultra")
   }
 
   function toggle() {
