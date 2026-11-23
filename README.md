@@ -1,5 +1,12 @@
 # Launchpad Ultra for Omarchy
 
+<p align="center">
+  <img src="docs/frosted.jpg" width="49%" alt="Frosted look">
+  <img src="docs/block.jpg" width="49%" alt="Block search bar with the sort button">
+  <img src="docs/lcd-amber.jpg" width="49%" alt="Amber LCD mode">
+  <img src="docs/glow.jpg" width="49%" alt="Glow search bar over a dark backdrop with large icons">
+</p>
+
 A fullscreen app grid for the [Omarchy](https://omarchy.org) shell: every
 installed app on sliding pages of six columns by four rows, over a frosted view
 of the desktop, with a search pill at the top.
