@@ -262,11 +262,13 @@ Item {
 
   readonly property string pluginId: (manifest && manifest.id) || "launchpad"
 
-  // Launchpad's settings hold the dock's icon size.
+  // Launchpad's settings hold the dock's icon size and bounce.
   Launchpad.LauncherSettings { id: prefs }
   // Apps opened from the dock count toward Launchpad's "most used" order.
   Launchpad.UsageStore { id: usage }
   readonly property int iconSize: prefs.dockIconSize
+  // How apps launched from the dock bounce.
+  readonly property string bounceStyle: prefs.dockBounce
 
   function setPosition(edge) {
     if (DockModel.POSITIONS.indexOf(edge) >= 0) Util.execDetached("omarchy-dock position " + edge)

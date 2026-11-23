@@ -81,6 +81,7 @@ redraws as you change things.
 | Sort button | on / off | off |
 | Sort apps by | A–Z / Most used | A–Z |
 | Dock icon size | 24 to 64 (in `launchpad.json` only) | 36 |
+| Dock bounce | Rubber (a hop with squash, stretch and dying rebounds) / Jelly (one stretchy hop, then a wobble that settles) / Off | Rubber |
 
 The sort button sits beside the search bar. "Most used" counts how often each app
 is opened from Launchpad or its dock, kept in

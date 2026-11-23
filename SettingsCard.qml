@@ -423,6 +423,12 @@ Rectangle {
         }
         SettingSwitch { label: card.catalog.t("settings.sortBox"); key: "sortBox" }
         SettingSwitch { label: card.catalog.t("settings.rememberPage"); key: "rememberPage" }
+        SettingChoice {
+          label: card.catalog.t("settings.dockBounce")
+          key: "dockBounce"
+          options: [card.option("rubber", "settings.dockBounce.rubber"), card.option("jelly", "settings.dockBounce.jelly"),
+                    card.option("off", "settings.off")]
+        }
       }
 
       // ---- Pages: how the grid moves ---------------------------------------

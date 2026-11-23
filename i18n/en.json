@@ -121,5 +121,8 @@
   "settings.searchLook.frame": "Corners",
   "settings.searchLook.brutal": "Block",
   "settings.searchLook.aurora": "Glow",
-  "settings.searchCalm": "Keep search bar still"
+  "settings.searchCalm": "Keep search bar still",
+  "settings.dockBounce": "Dock bounce",
+  "settings.dockBounce.rubber": "Rubber",
+  "settings.dockBounce.jelly": "Jelly"
 }

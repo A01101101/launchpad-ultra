@@ -31,6 +31,8 @@ Item {
     emptyClick: { value: "close", options: ["close", "page"] },
     scrollSensitivity: { value: 3, min: 1, max: 5 },
     dockIconSize: { value: 36, min: 24, max: 64 },
+    // How an app launched from the dock bounces until its window shows.
+    dockBounce: { value: "rubber", options: ["rubber", "jelly", "off"] },
     // The search bar's size, in percent, and its border in pixels (0 is none).
     searchSize: { value: 100, min: 60, max: 240 },
     searchBorder: { value: 1, min: 0, max: 6 },
@@ -93,6 +95,7 @@ Item {
   readonly property string emptyClick: values.emptyClick
   readonly property int scrollSensitivity: values.scrollSensitivity
   readonly property int dockIconSize: values.dockIconSize
+  readonly property string dockBounce: values.dockBounce
   readonly property int searchSize: values.searchSize
   readonly property int searchBorder: values.searchBorder
   readonly property string theme: values.theme

@@ -64,6 +64,132 @@ PanelWindow {
     : position === "right" ? Item.Right
     : Item.Bottom
 
+  // How a launching app bounces, from Launchpad's settings: "rubber",
+  // "jelly", or "off".
+  readonly property string bounceStyle: dock ? dock.bounceStyle : "rubber"
+
+  // Rubber: a launching app's bounce, worked out as a rubber ball under gravity: a
+  // crouch, a hop, then rebounds that die away, and a rest. Each flight is a
+  // parabola, h = 4H·u(1 − u). A rebound leaves with the fraction `rebound`
+  // of the speed it landed with, so with gravity unchanged it rises rebound²
+  // as high and stays up rebound as long. Squash and stretch keep the icon's
+  // area (across · along = 1), and every phase starts where the last one
+  // ended, so nothing jumps.
+  readonly property real bounceHeight: iconSize * 1.0
+  readonly property real rebound: 0.45
+  readonly property int bounceRebounds: 2
+  // How far the icon stretches along its flight at full speed, how hard it
+  // squashes landing from the full hop, and how deep it crouches first.
+  readonly property real bounceStretch: 0.18
+  readonly property real bounceSquash: 0.3
+  readonly property real bounceCrouch: 0.22
+  // How far it leans, in degrees, over the main hop: into the jump going up,
+  // the other way coming down, upright again on landing.
+  readonly property real bounceLean: 7
+  // Phase lengths in units of the main hop's flight time, and that time.
+  readonly property real bounceCrouchUnits: 0.2
+  readonly property real bounceContactUnits: 0.14
+  readonly property real bounceRestUnits: 0.25
+  readonly property int bounceFlightMs: 240
+  readonly property var bouncePhases: {
+    // [kind, length, height, stretch, squash] for each phase in turn.
+    var phases = [["crouch", bounceCrouchUnits, 0, bounceStretch, bounceCrouch]]
+    for (var i = 0; i <= bounceRebounds; i++) {
+      var e = Math.pow(rebound, i)
+      phases.push(["flight", e, bounceHeight * e * e, bounceStretch * e, 0])
+      phases.push(["land", bounceContactUnits * e, 0, bounceStretch * e, bounceSquash * e])
+    }
+    phases.push(["rest", bounceRestUnits, 0, 0, 0])
+    return phases
+  }
+  readonly property real bounceUnits: bouncePhases.reduce(function(sum, phase) { return sum + phase[1] }, 0)
+
+  // Where the bounce is at t, 0 to 1 through one cycle: how far the icon is
+  // off the dock, how much it is stretched (above 1) or squashed (below)
+  // along the hop, and how far it leans.
+  function rubberAt(t) {
+    var x = t * bounceUnits
+    var phases = bouncePhases
+    for (var i = 0; i < phases.length; i++) {
+      var phase = phases[i]
+      if (x >= phase[1] && i < phases.length - 1) { x -= phase[1]; continue }
+      var u = Math.min(1, x / phase[1])
+      if (phase[0] === "flight") {
+        return {
+          hop: 4 * phase[2] * u * (1 - u),
+          along: 1 + phase[3] * Math.abs(1 - 2 * u),
+          lean: i === 1 ? bounceLean * Math.sin(2 * Math.PI * u) : 0
+        }
+      }
+      if (phase[0] === "rest") return { hop: 0, along: 1, lean: 0 }
+      // On the dock: from the stretch it came in with to the one it leaves
+      // with, dipping into a squash halfway.
+      var into = phase[0] === "crouch" ? 0 : phase[3]
+      var next = phases[i + 1][0] === "flight" ? phases[i + 1][3] : 0
+      return { hop: 0, along: 1 + into * (1 - u) + next * u - phase[4] * Math.sin(Math.PI * u), lean: 0 }
+    }
+    return { hop: 0, along: 1, lean: 0 }
+  }
+
+  // Jelly: a crouch, one big stretchy hop on the same parabola, and on
+  // landing a wobble that dies away. The wobble is a damped spring,
+  // x(t) = e^(−ζωt)·(x₀·cos ω_d t + v·sin ω_d t) with ω_d = ω√(1 − ζ²):
+  // it lands still stretched (x₀) and splats (v). It ends on a zero of the
+  // spring, so the icon is at rest exactly when the wobble stops. The icon
+  // rocks side to side as it settles, over a whole number of half swings,
+  // so it is upright then too.
+  readonly property real jellyHeight: iconSize * 0.8
+  readonly property real jellyStretch: 0.26
+  readonly property real jellyCrouch: 0.18
+  readonly property real jellySplat: 0.4
+  readonly property real jellyLean: 6
+  // The spring: its natural frequency in hertz and its damping ratio.
+  readonly property real jellyHz: 7
+  readonly property real jellyDamping: 0.18
+  readonly property int jellyCrouchMs: 50
+  readonly property int jellyFlightMs: 250
+  readonly property int jellyRestMs: 60
+  // Wobble at least this long, then stop on the spring's next zero.
+  readonly property int jellyWobbleMinMs: 320
+  readonly property real jellyOmega: 2 * Math.PI * jellyHz
+  readonly property real jellyOmegaD: jellyOmega * Math.sqrt(1 - jellyDamping * jellyDamping)
+  readonly property real jellyWobbleMs: {
+    // x(t) = 0 where tan(ω_d t) = −x₀ / v.
+    var first = Math.atan(jellyStretch / jellySplat)
+    var minimum = jellyWobbleMinMs / 1000
+    var n = Math.max(0, Math.ceil((minimum * jellyOmegaD - first) / Math.PI))
+    return (first + n * Math.PI) / jellyOmegaD * 1000
+  }
+  readonly property real jellyCycleMs: jellyCrouchMs + jellyFlightMs + jellyWobbleMs + jellyRestMs
+
+  function jellyAt(t) {
+    var ms = t * jellyCycleMs
+    if (ms < jellyCrouchMs) {
+      var c = ms / jellyCrouchMs
+      return { hop: 0, along: 1 + jellyStretch * c - jellyCrouch * Math.sin(Math.PI * c), lean: 0 }
+    }
+    ms -= jellyCrouchMs
+    if (ms < jellyFlightMs) {
+      var u = ms / jellyFlightMs
+      return { hop: 4 * jellyHeight * u * (1 - u), along: 1 + jellyStretch * Math.abs(1 - 2 * u), lean: 0 }
+    }
+    ms -= jellyFlightMs
+    if (ms < jellyWobbleMs) {
+      var s = ms / 1000
+      var decay = Math.exp(-jellyDamping * jellyOmega * s)
+      var x = decay * (jellyStretch * Math.cos(jellyOmegaD * s) - jellySplat * Math.sin(jellyOmegaD * s))
+      var lean = jellyLean * decay * Math.sin(3 * Math.PI * ms / jellyWobbleMs)
+      return { hop: 0, along: 1 + x, lean: lean }
+    }
+    return { hop: 0, along: 1, lean: 0 }
+  }
+
+  // Where the chosen bounce is at t, 0 to 1 through one cycle.
+  function bounceAt(t) {
+    return bounceStyle === "jelly" ? jellyAt(t) : rubberAt(t)
+  }
+  readonly property real bounceCycleMs: bounceStyle === "jelly" ? jellyCycleMs : bounceFlightMs * bounceUnits
+
   // The app being dragged along the dock, how far the pointer has taken it,
   // and the slot it would land in.
   property int dragIndex: -1
@@ -499,8 +625,10 @@ PanelWindow {
     property point pressPoint
     property bool dragged: false
     readonly property int windowCount: modelData ? modelData.windows.length : 0
-    // How far a launching app's icon has hopped off the dock, in pixels.
-    property real hop: 0
+    // How far through one bounce a launching app is, 0 to 1.
+    property real bounceT: 0
+    readonly property var bounce: launching && window.bounceStyle !== "off" ? window.bounceAt(bounceT) : ({ hop: 0, along: 1, lean: 0 })
+    readonly property real hop: bounce.hop
 
     // Slots between where the dragged app was and where it would land step
     // aside to make room; the dragged one follows the pointer.
@@ -617,7 +745,8 @@ PanelWindow {
     }
 
     // Running apps are drawn in full and pinned ones that are not running
-    // faded. One that is starting bounces, like the macOS dock, in full.
+    // faded. One that is starting bounces, like the macOS dock, in full, the
+    // way the settings choose.
     Image {
       id: appIcon
       x: window.iconInset
@@ -634,10 +763,26 @@ PanelWindow {
       // The hop points away from the screen edge the dock sits on.
       readonly property real hopX: window.position === "left" ? appSlot.hop : window.position === "right" ? -appSlot.hop : 0
       readonly property real hopY: window.position === "top" ? appSlot.hop : window.position === "bottom" ? -appSlot.hop : 0
-      transform: Translate {
-        x: (window.vertical ? (appSlot.lifted ? window.dragCross : 0) : appSlot.displayedShift) + appIcon.hopX
-        y: (window.vertical ? appSlot.displayedShift : (appSlot.lifted ? window.dragCross : 0)) + appIcon.hopY
-      }
+      transform: [
+        // Squashed and stretched about the edge it lands on, so it stays
+        // planted on the dock.
+        Scale {
+          origin.x: window.position === "right" ? appIcon.width : window.position === "left" ? 0 : appIcon.width / 2
+          origin.y: window.position === "bottom" ? appIcon.height : window.position === "top" ? 0 : appIcon.height / 2
+          xScale: window.vertical ? appSlot.bounce.along : 1 / appSlot.bounce.along
+          yScale: window.vertical ? 1 / appSlot.bounce.along : appSlot.bounce.along
+        },
+        // Leans about the same planted edge.
+        Rotation {
+          origin.x: window.position === "right" ? appIcon.width : window.position === "left" ? 0 : appIcon.width / 2
+          origin.y: window.position === "bottom" ? appIcon.height : window.position === "top" ? 0 : appIcon.height / 2
+          angle: appSlot.bounce.lean
+        },
+        Translate {
+          x: (window.vertical ? (appSlot.lifted ? window.dragCross : 0) : appSlot.displayedShift) + appIcon.hopX
+          y: (window.vertical ? appSlot.displayedShift : (appSlot.lifted ? window.dragCross : 0)) + appIcon.hopY
+        }
+      ]
       scale: appSlot.lifted && window.removeArmed ? 0.82 : appSlot.lifted || appSlot.hovered ? 1.15 : 1
 
       Behavior on opacity { NumberAnimation { duration: Style.duration(120); easing.type: Easing.OutCubic } }
@@ -648,16 +793,16 @@ PanelWindow {
 
     // With animations off it holds still rather than spinning through
     // zero-length steps.
-    SequentialAnimation {
-      running: appSlot.launching && !Style.reduceMotion
+    // Time runs evenly; window.bounceAt gives the motion its shape.
+    NumberAnimation {
+      target: appSlot
+      property: "bounceT"
+      from: 0
+      to: 1
+      running: appSlot.launching && window.bounceStyle !== "off" && !Style.reduceMotion
       loops: Animation.Infinite
-      onRunningChanged: if (!running) appSlot.hop = 0
-
-      // Up quickly, slowing at the top, then back down to the dock, and a short
-      // rest on the dock before the next hop.
-      NumberAnimation { target: appSlot; property: "hop"; from: 0; to: Math.round(window.iconSize * 0.55); duration: Style.duration(260); easing.type: Easing.OutQuad }
-      NumberAnimation { target: appSlot; property: "hop"; to: 0; duration: Style.duration(260); easing.type: Easing.InOutQuad }
-      PauseAnimation { duration: Style.duration(120) }
+      duration: Style.duration(Math.round(window.bounceCycleMs))
+      onRunningChanged: if (!running) appSlot.bounceT = 0
     }
   }
 
