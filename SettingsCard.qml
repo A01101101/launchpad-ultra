@@ -561,8 +561,8 @@ Rectangle {
         SettingChoice {
           label: card.catalog.t("settings.searchPlace")
           key: "searchPlace"
-          options: [card.option("top", "settings.place.top"), card.option("center", "settings.place.center"),
-                    card.option("bottom", "settings.place.bottom"), card.option("custom", "settings.place.custom")]
+          options: [card.option("top", "settings.place.top"), card.option("bottom", "settings.place.bottom"),
+                    card.option("custom", "settings.place.custom")]
         }
         SliderRow {
           label: card.catalog.t("settings.searchSize")

@@ -80,7 +80,7 @@ redraws as you change things.
 | Search underline | on / off (Plain look) | on |
 | Search cursor | Line / Block / Underscore | Line |
 | Blinking cursor | on / off | on |
-| Search position | Top / Middle / Bottom / Custom | Top |
+| Search position | Top / Bottom / Custom | Top |
 | Search bar size | 60% to 240% | 100% |
 | Search bar border | None to 6 (Frosted, Glow and LCD) | 1 |
 | Placeholder | Search / Rotating hints / Confused face / Custom | Search |

@@ -63,8 +63,9 @@ Item {
     // The words the "custom" placeholder shows, up to 60 characters.
     searchCustom: { value: "", maxLength: 60 },
     // Where the bar sits: a preset, or "custom" at searchX / searchY (the
-    // bar's centre as a fraction of the screen), set by dragging it.
-    searchPlace: { value: "top", options: ["top", "center", "bottom", "custom"] },
+    // bar's centre as a fraction of the screen), set by dragging it. A saved
+    // "center", since removed, falls back to the top.
+    searchPlace: { value: "top", options: ["top", "bottom", "custom"] },
     searchX: { value: 0.5, min: 0, max: 1 },
     searchY: { value: 0.06, min: 0, max: 1 },
     // Whether the settings card floats, and where: its centre as a fraction

@@ -473,7 +473,6 @@ Item {
            : viewport.x + (viewport.width - width) / 2
         y: settings.searchPlace === "custom"
            ? Math.max(0, Math.min(parent.height - height, settings.searchY * parent.height - height / 2))
-           : settings.searchPlace === "center" ? (parent.height - height) / 2
            : settings.searchPlace === "bottom" ? parent.height - Style.space(96) - height
            : Style.space(36)
         radius: lcd ? Math.round(Style.space(3) * searchPill.fit)
