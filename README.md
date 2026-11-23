@@ -23,6 +23,14 @@ working as before.
 omarchy plugin add https://github.com/A01101101/launchpad-ultra.git --enable
 ```
 
+Update to the latest version, or remove it (which brings Omarchy's own dock
+back):
+
+```bash
+omarchy plugin update launchpad
+omarchy plugin remove launchpad
+```
+
 ## Open it
 
 From a terminal or script:
