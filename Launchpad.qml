@@ -443,7 +443,7 @@ Item {
         readonly property real fontPx: headline ? Math.round(height * 0.78)
                                        : Math.round(Style.font.title * searchPill.fit * (win98 ? 0.92 : frame ? 1.1 : 1))
         // How far a brutal bar has pressed into its shadow.
-        readonly property real press: brutal && filled && !settings.searchCalm ? Math.round(Style.space(3) * fit) : 0
+        property real press: brutal && filled && !settings.searchCalm ? Math.round(Style.space(3) * fit) : 0
         Behavior on press { NumberAnimation { duration: Style.duration(120); easing.type: Easing.OutCubic } }
         readonly property real ringWidth: Math.max(2, settings.searchBorder)
         // The looking glass's color.
@@ -556,7 +556,7 @@ Item {
         Item {
           id: frameCorners
           visible: searchPill.frame
-          readonly property real reach: searchPill.filled && !settings.searchCalm ? 0 : Math.round(Style.space(6) * searchPill.fit)
+          property real reach: searchPill.filled && !settings.searchCalm ? 0 : Math.round(Style.space(6) * searchPill.fit)
           readonly property real arm: Math.round(searchPill.height * 0.34)
           readonly property real line: searchPill.ringWidth
           readonly property color tone: root.inkAlpha(searchPill.filled ? 0.95 : 0.55)
@@ -568,14 +568,14 @@ Item {
             model: 4
             delegate: Item {
               required property int index
-              readonly property bool right: index === 1 || index === 3
-              readonly property bool bottom: index >= 2
-              x: right ? frameCorners.width - frameCorners.arm : 0
-              y: bottom ? frameCorners.height - frameCorners.arm : 0
+              readonly property bool onRight: index === 1 || index === 3
+              readonly property bool onBottom: index >= 2
+              x: onRight ? frameCorners.width - frameCorners.arm : 0
+              y: onBottom ? frameCorners.height - frameCorners.arm : 0
               width: frameCorners.arm
               height: frameCorners.arm
-              Rectangle { y: parent.bottom ? parent.height - height : 0; width: parent.width; height: frameCorners.line; color: frameCorners.tone }
-              Rectangle { x: parent.right ? parent.width - width : 0; width: frameCorners.line; height: parent.height; color: frameCorners.tone }
+              Rectangle { y: parent.onBottom ? parent.height - height : 0; width: parent.width; height: frameCorners.line; color: frameCorners.tone }
+              Rectangle { x: parent.onRight ? parent.width - width : 0; width: frameCorners.line; height: parent.height; color: frameCorners.tone }
             }
           }
         }
